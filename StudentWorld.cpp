@@ -1,6 +1,7 @@
 #include "StudentWorld.h"
 #include "Actor.h"
 #include <string>
+#include <sstream>
 using namespace std;
 
 
@@ -170,6 +171,10 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+    if (m_user != nullptr)
+    {
+	setDisplayText();
+    }
     // check if player is alive
     if (m_user == nullptr)
     {
@@ -818,3 +823,12 @@ int StudentWorld::ProtesterStunTicks()
 }
 
 // Students: Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
+
+void StudentWorld::setDisplayText() {
+	// Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
+	std::ostringstream os;
+	os.precision(2);
+	os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << "2" << " Scr: " << getScore();
+	std::string s = os.str();
+	setGameStatText(s);
+}
