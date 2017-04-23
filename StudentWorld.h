@@ -91,6 +91,7 @@ public:
     int ProtesterRestTicks();
     int ProtesterStunTicks();
     
+    void setDisplayText();
 private:
     std::vector<Actor*> m_actors;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
