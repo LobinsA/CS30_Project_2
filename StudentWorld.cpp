@@ -4,14 +4,14 @@
 #include <sstream>
 using namespace std;
 
-
-
+　
+　
 GameWorld* createStudentWorld(string assetDir)
 {
     return new StudentWorld(assetDir);
 }
 
-
+　
 StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(nullptr)
 {
     // initialize to null to prevent potential access of random garbage memory
@@ -21,13 +21,13 @@ StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(n
     // land is initialized
 }
 
-
+　
 StudentWorld::~StudentWorld()
 {
     cleanUp();
 }
 
-
+　
 /*
  [] refillField function info
  ---------------------------
@@ -43,7 +43,7 @@ void StudentWorld::refillField()
             m_land[x][y] = new Dirt(this, x, y);
 }
 
-
+　
 /*
  [] buildMineShaft function info
  ------------------------------
@@ -62,7 +62,7 @@ void StudentWorld::buildMineShaft()
         }
 }
 
-
+　
 void StudentWorld::placeObjects()
 {
     
@@ -79,8 +79,17 @@ void StudentWorld::placeObjects()
     
     
     // place barrel of oil test
-    Actor* new_oilbarrel = new BarrelOfOil(this, 5, 54);
-    insertActor(new_oilbarrel);
+	for (int k = 0; k < min(2 + static_cast<int>(getLevel()),18); k++)
+	{
+		Actor* new_oilbarrel = new BarrelOfOil(this, 5, 54);
+		if (getBarrelCount() <= 0)
+		{
+			m_BarrelCount = 0;
+		}
+		m_BarrelCount++;
+		insertActor(new_oilbarrel);
+	}
+
     
     
     // get numof ticks from current level
@@ -128,13 +137,13 @@ void StudentWorld::placeObjects()
     // int L = min(2 + static_cast<int>(getLevel()), 18);
 }
 
-
+　
 void StudentWorld::insertActor(Actor* entry)
 {
     m_actors.push_back(entry);
 }
 
-
+　
 /*
  [] Note about the handling of actors within the world
  -----------------------------------------------------
@@ -168,13 +177,11 @@ int StudentWorld::init()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-
+　
 int StudentWorld::move()
 {
-    if (m_user != nullptr)
-    {
+	//Display called every tick
 	setDisplayText();
-    }
     // check if player is alive
     if (m_user == nullptr)
     {
@@ -201,7 +208,7 @@ int StudentWorld::move()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-
+　
 void StudentWorld::cleanUp()
 {
     // delete all actors (which includes the DiggerMan)
@@ -243,7 +250,7 @@ void StudentWorld::updateCoord(GraphObject::Direction dir, int& x, int& y, int d
         x -= distance;
 }
 
-
+　
 /*
  [] outOfBounds function info
  --------------------------------
@@ -262,7 +269,7 @@ bool StudentWorld::outOfBounds(const int& x, const int& y) const
         return false;
 }
 
-
+　
 /*
  [] BlockedByBoulder function info
  -------------------------------------
@@ -298,7 +305,7 @@ bool StudentWorld::BlockedByBoulder(Actor* OneSelf, int x, int y) const
     return false;
 }
 
-
+　
 /*
  [][][][]
  [][][][]
@@ -316,7 +323,7 @@ bool StudentWorld::LayerOfDirt4x4(int x, int y) const
     return false;
 }
 
-
+　
 /*
  [][][][]
  */
@@ -328,7 +335,7 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
     return false;
 }
 
-
+　
 /*
  [] checkItemPickup function info
  --------------------------------
@@ -382,6 +389,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
             {
                 case Actor::BARRELOFOIL:
                     // ** decrement oil count from world **
+					decBarrelCount();
                     playSound(SOUND_FOUND_OIL);
                     increaseScore(1000);
                     break;
@@ -405,7 +413,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
     }
 }
 
-
+　
 void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU) // NEW!!!! (edited)
 {
     if (CPU->isLeaving())
@@ -418,7 +426,7 @@ void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU) // NEW!!!! (edi
     }
 }
 
-
+　
 bool StudentWorld::proximityCheck(Actor* actor, int distance)
 {
     if (withinRad(actor, m_user, distance))
@@ -427,7 +435,7 @@ bool StudentWorld::proximityCheck(Actor* actor, int distance)
         return false;
 }
 
-
+　
 void StudentWorld::shootSquirtGun() // NEW!!!!! (edited)
 {
     // get user's current coordinate
@@ -446,7 +454,7 @@ void StudentWorld::shootSquirtGun() // NEW!!!!! (edited)
         insertActor(new Squirt(this, x, y, m_user->getDirection()));
 }
 
-
+　
 /*
  [] dropGoldNugget function info
  ---------------------------------
@@ -457,7 +465,7 @@ void StudentWorld::dropGoldNugget()
     insertActor(new DroppedNugget(this, m_user->getX(), m_user->getY(), 100));
 }
 
-
+　
 /*
  [] withinRad functions info
  --------------------------
@@ -491,7 +499,7 @@ void StudentWorld::dropGoldNugget()
  but used under different circumstances
  */
 
-
+　
 bool StudentWorld::withinRad(double x1, double y1, Actor* P2, double radius) const
 {
     // r = sqrt[(x2-x1)^(2) + (y2-y1)^(2)]
@@ -508,7 +516,7 @@ bool StudentWorld::withinRad(double x1, double y1, Actor* P2, double radius) con
         return false;
 }
 
-
+　
 bool StudentWorld::withinRad(Actor* P1, Actor* P2, double radius) const
 {
     // r = sqrt[(x2-x1)^(2) + (y2-y1)^(2)]
@@ -525,7 +533,7 @@ bool StudentWorld::withinRad(Actor* P1, Actor* P2, double radius) const
         return false;
 }
 
-
+　
 /*
  [] CPUspotsUser function info
  -----------------------------
@@ -644,14 +652,14 @@ bool StudentWorld::CPUspotsUserfromAFar(Actor* CPU)
     return false;
 }
 
-
+　
 void StudentWorld::shout(int amount)
 {
     playSound(SOUND_PROTESTER_YELL);
     m_user->annoy(amount);
 }
 
-
+　
 bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points, Actor::Misc object) // NEW!!!! (edited)
 {
     size_t i;
@@ -673,8 +681,8 @@ bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points,
     return annoyed;
 }
 
-
-
+　
+　
 void StudentWorld::scanForItems()
 {
     // For some reason, we can't use isVisible()
@@ -826,9 +834,12 @@ int StudentWorld::ProtesterStunTicks()
 
 void StudentWorld::setDisplayText() {
 	// Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
-	std::ostringstream os;
-	os.precision(2);
-	os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << "2" << " Scr: " << getScore();
-	std::string s = os.str();
-	setGameStatText(s);
+	if (m_user != nullptr)
+	{
+		std::ostringstream os;
+		os.precision(2);
+		os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << getBarrelCount() << " Scr: " << getScore();
+		std::string s = os.str();
+		setGameStatText(s);
+	}
 }
