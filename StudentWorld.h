@@ -94,6 +94,7 @@ public:
     void setDisplayText();
 private:
     std::vector<Actor*> m_actors;
+    std::vector<Actor*> m_barrels;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
     DiggerMan* m_user;
     
