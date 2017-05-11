@@ -4,15 +4,15 @@
 #include <sstream>
 using namespace std;
 
-
+// Problem: When all barrels of oil are collected,
+// the level doesn't finish  :\
 
 GameWorld* createStudentWorld(string assetDir)
 {
     return new StudentWorld(assetDir);
 }
-
-
-StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(nullptr)
+StudentWorld::StudentWorld(std::string assetDir)
+: GameWorld(assetDir), m_user(nullptr), m_BarrelCount(0)
 {
     // initialize to null to prevent potential access of random garbage memory
     for (int x = 0; x < VIEW_WIDTH; x++)
@@ -21,12 +21,10 @@ StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(n
     // land is initialized
 }
 
-
 StudentWorld::~StudentWorld()
 {
     cleanUp();
 }
-
 
 /*
  [] refillField function info
@@ -42,7 +40,6 @@ void StudentWorld::refillField()
         for (int y = 0; y < VIEW_HEIGHT - SPRITE_HEIGHT; y++)
             m_land[x][y] = new Dirt(this, x, y);
 }
-
 
 /*
  [] buildMineShaft function info
@@ -62,78 +59,82 @@ void StudentWorld::buildMineShaft()
         }
 }
 
-
 void StudentWorld::placeObjects()
 {
     
-    
-    // place Boulder object as test
-    Actor* new_boulder = new Boulder(this, 60, 54);
-    removeDirt(new_boulder);
-    insertActor(new_boulder);
-    
-    
-    Actor* new_boulder2 = new Boulder(this, 60, 30);
-    removeDirt(new_boulder2);
-    insertActor(new_boulder2);
-    
-    
-    // place barrel of oil test
-    Actor* new_oilbarrel = new BarrelOfOil(this, 5, 54);
-    insertActor(new_oilbarrel);
-    
-    
-    // get numof ticks from current level
-    int sonarkitTicks = max(100, (300 - 10 * static_cast<int>(getLevel()))); // NEW!!!
-    
-    
-    // place sonarkit as test
-    Actor* new_sonarkit = new SonarKit(this, 10, 55, sonarkitTicks);
-    insertActor(new_sonarkit);
-    
-    
-    Actor* new_goldnugg = new GoldNugget(this, 40, 55);
-    insertActor(new_goldnugg);
-    
-    
     /*
-     [] ticksToWaitBetweenMoves info
-     -------------------------------
-     The Regular and Hardcore Protesters must compute a value
-     indicating how often they're allowed to take an action (e.g., once every N ticks).
-     This number of ticks (also known as 'resting ticks') may be computed as follows:
-     
+     NOTE: THE SPAWNING OF PROTESTERS WON'T BE HANDLED HERE
+     ------------------------------------------------------
      int ticksToWaitBetweenMoves = max(0, 3 - current_level_number/4)
+     
+     int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel() / 4));
+     Actor* new_RegProtestor = new RegularProtester(this, ticksToWaitBetweenMoves);
+     insertActor(new_RegProtestor);
+     
+     Actor* new_HardcoreProtestor = new HardcoreProtester(this, ticksToWaitBetweenMoves);
+     insertActor(new_HardcoreProtestor);
      */
     
-    int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel() / 4));
-     Actor* new_RegProtestor = new RegularProtester(this, ticksToWaitBetweenMoves);
-    insertActor(new_RegProtestor);
-    
-    Actor* new_HardcoreProtestor = new HardcoreProtester(this, ticksToWaitBetweenMoves);
-    insertActor(new_HardcoreProtestor);
-    
-    
-    
-    
     // B Boulders in each level, where:
-    // int B = min(static_cast<int>(getLevel()) / 2 + 2, 7);
+    int B = min(static_cast<int>(getLevel()) / 2 + 2, 7);
+    for (int i = 0; i < B; i++)
+        distributeObject(Actor::BOULDER);
     
     
     // G Gold Nuggets in each level, where:
-    // int G = max(5-static_cast<int>(getLevel()) / 2, 2);
-    
+    int G = max(5-static_cast<int>(getLevel()) / 2, 2);
+    for (int i = 0; i < G; i++)
+        distributeObject(Actor::GOLDNUGGET);
     
     // L Barrels of oil in each level, where:
-    // int L = min(2 + static_cast<int>(getLevel()), 18);
+    int L = min(2 + static_cast<int>(getLevel()), 18);
+    for (int i = 0; i < L; i++)
+        distributeObject(Actor::BARRELOFOIL);
 }
 
+    void StudentWorld::distributeObject(Actor::Misc obj) // [NEW!!]
+{
+    
+    // get (x, y) coordinate of obj
+    int x = rand() % 61; // [0-60]
+    int y;
+    
+    if (obj == Actor::BOULDER)
+        y = rand() % 37 + 20; // [0-36]+20 -> [20-56]
+    else
+        y = rand() % 57; // [0-56]
+    
+    // check if any part of the obj
+    // is within the mineshaft
+    if (x >= 26 && x <= 34)
+        return distributeObject(obj); // if so, try again
+    
+    // check if (x, y) is within 6 units of another object
+    for (int i = 0; i < m_actors.size(); i++)
+        if (withinRad(x, y, m_actors[i], 6))
+            return distributeObject(obj); // if so, try again
+    
+    // if passes all the requirements
+    // add actor to the world
+    Actor* newEntry = nullptr;
+    
+    if (obj == Actor::GOLDNUGGET)
+        newEntry = new GoldNugget(this, x, y);
+    else if (obj == Actor::BARRELOFOIL) {
+        newEntry = new BarrelOfOil(this, x, y);
+        m_BarrelCount++;
+    }
+    else if (obj == Actor::BOULDER) {
+        newEntry = new Boulder(this, x, y);
+        removeDirt(newEntry);
+    }
+    insertActor(newEntry);
+}
 
 void StudentWorld::insertActor(Actor* entry)
 {
     m_actors.push_back(entry);
 }
-
 
 /*
  [] Note about the handling of actors within the world
@@ -168,13 +169,10 @@ int StudentWorld::init()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-
 int StudentWorld::move()
 {
-    if (m_user != nullptr)
-    {
-	setDisplayText();
-    }
+    //Display called every tick
+    setDisplayText();
     // check if player is alive
     if (m_user == nullptr)
     {
@@ -200,7 +198,6 @@ int StudentWorld::move()
     // continue to next tick
     return GWSTATUS_CONTINUE_GAME;
 }
-
 
 void StudentWorld::cleanUp()
 {
@@ -298,7 +295,6 @@ bool StudentWorld::BlockedByBoulder(Actor* OneSelf, int x, int y) const
     return false;
 }
 
-
 /*
  [][][][]
  [][][][]
@@ -328,7 +324,6 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
     return false;
 }
 
-
 /*
  [] checkItemPickup function info
  --------------------------------
@@ -336,15 +331,15 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
  then item will be acquired by user
  
  o Barrel of oil: 1000 points
-    the DiggerMan must collect all of the Barrels
-    on the oil field to complete the level
+ the DiggerMan must collect all of the Barrels
+ on the oil field to complete the level
  o Gold Nugget: 10 points
-    the DiggerMan gets 1 piece of gold added to their inventory,
-    which they can subsequently drop to bribe Protesters
+ the DiggerMan gets 1 piece of gold added to their inventory,
+ which they can subsequently drop to bribe Protesters
  o Water: 100 points
-    5 squirts worth of water are added to the DiggerMan's inventory
+ 5 squirts worth of water are added to the DiggerMan's inventory
  o Sonar Kit: 75 points
-    the DiggerMan gets two new sonar charges added to their inventory
+ the DiggerMan gets two new sonar charges added to their inventory
  
  [] Special Case (items non-collectable by user)
  --------------------------------------------
@@ -363,7 +358,7 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
  while a Hardcore Protester looks at gold, then keeps it
  */
 
-void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (edited)
+void StudentWorld::checkItemPickup(Item* obj)
 {
     if (obj->getItemType() == Actor::DROPPEDNUGGET) {
         // iterate thru vector and find any Protesters
@@ -381,7 +376,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
             switch (item)
             {
                 case Actor::BARRELOFOIL:
-                    // ** decrement oil count from world **
+                    decBarrelCount();
                     playSound(SOUND_FOUND_OIL);
                     increaseScore(1000);
                     break;
@@ -406,7 +401,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
 }
 
 
-void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU) // NEW!!!! (edited)
+void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU)
 {
     if (CPU->isLeaving())
         return;
@@ -428,7 +423,7 @@ bool StudentWorld::proximityCheck(Actor* actor, int distance)
 }
 
 
-void StudentWorld::shootSquirtGun() // NEW!!!!! (edited)
+void StudentWorld::shootSquirtGun()
 {
     // get user's current coordinate
     int x = m_user->getX();
@@ -491,7 +486,6 @@ void StudentWorld::dropGoldNugget()
  but used under different circumstances
  */
 
-
 bool StudentWorld::withinRad(double x1, double y1, Actor* P2, double radius) const
 {
     // r = sqrt[(x2-x1)^(2) + (y2-y1)^(2)]
@@ -553,7 +547,7 @@ bool StudentWorld::withinRad(Actor* P1, Actor* P2, double radius) const
 bool StudentWorld::CPUspotsUser(Actor* CPU)
 {
     if (withinRad(CPU, m_user, 4)) {
-    
+        
         bool within_x_fov = (m_user->getX() >= CPU->getX() && m_user->getX() <= CPU->getX() + 3);
         bool within_y_fov = (m_user->getY() >= CPU->getY() && m_user->getY() <= CPU->getY() + 3);
         
@@ -574,14 +568,14 @@ bool StudentWorld::CPUspotsUser(Actor* CPU)
     return false;
 }
 
-/* 
+/*
  [] CPUspotsUserfromAFar info
  ----------------------------
  First, the function checks if CPU
  isn't within a radius of 4 of the user
  If it passes that requirement,
  this function will then check if CPU is in:
-    same level vertically or horizontally of the user
+ same level vertically or horizontally of the user
  
  Not only that, but also, if there's no boulder(s) or dirt blocking the path
  The CPU can't see through obstacles (such as dirt or boulders)
@@ -594,7 +588,7 @@ bool StudentWorld::CPUspotsUserfromAFar(Actor* CPU)
         // get CPU's current coordinate
         int x = CPU->getX();
         int y = CPU->getY();
-    
+        
         GraphObject::Direction dirToUser;
         
         // CASE 1: DIRECT LINE-OF-SIGHT VERTICALLY
@@ -651,8 +645,7 @@ void StudentWorld::shout(int amount)
     m_user->annoy(amount);
 }
 
-
-bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points, Actor::Misc object) // NEW!!!! (edited)
+bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points, Actor::Misc object)
 {
     size_t i;
     bool annoyed = false;
@@ -672,8 +665,6 @@ bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points,
     }
     return annoyed;
 }
-
-
 
 void StudentWorld::scanForItems()
 {
@@ -776,7 +767,7 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
  This will do for now, but if a solution is found where we can
  access function max in both StudentWorld files and Actor files, then that'll be good
  
- Or maybe function(s) where we can gather all 
+ Or maybe function(s) where we can gather all
  the formulas given in the project specs is good?
  So we don't have random usage of formulas scattered throughout the code?
  Idk, you'll be the judge
@@ -790,7 +781,6 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
  This number of ticks (also known as “resting ticks”) may be computed as follows:
  
 	int ticksToWaitBetweenMoves = max(0, 3 – current_level_number/4)
-
  */
 int StudentWorld::ProtesterRestTicks()
 {
@@ -813,7 +803,6 @@ int StudentWorld::ProtesterRestTicks()
  the Hardcore Protester will become fixated on the Nugget and
  will pause to stare at it (just as if he/she were in a resting state – doing nothing else) for the following number of game ticks:
 	ticks_to_stare = max(50, 100 – current_level_number * 10)
-
  
  */
 int StudentWorld::ProtesterStunTicks()
@@ -825,10 +814,13 @@ int StudentWorld::ProtesterStunTicks()
 // Students: Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
 
 void StudentWorld::setDisplayText() {
-	// Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
-	std::ostringstream os;
-	os.precision(2);
-	os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << "2" << " Scr: " << getScore();
-	std::string s = os.str();
-	setGameStatText(s);
+    // Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
+    if (m_user != nullptr)
+    {
+        std::ostringstream os;
+        os.precision(2);
+        os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << getBarrelCount() << " Scr: " << getScore();
+        std::string s = os.str();
+        setGameStatText(s);
+    }
 }
