@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-
 // Students: Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
 
@@ -25,11 +24,9 @@ class DiggerMan;
 class Dirt;
 
 
-
 class StudentWorld : public GameWorld
 {
 public:
-    
     
     StudentWorld(std::string assetDir);
     ~StudentWorld();
@@ -43,6 +40,8 @@ public:
     void refillField();
     void buildMineShaft();
     void placeObjects();
+    void distributeObject(Actor::Misc obj);
+    
     void removeDead();
     
     
@@ -69,7 +68,7 @@ public:
     
     void scanForItems();
     void checkItemPickup(Item* actor);
-    void checkdroppedNugget(Item* actor, Protester* protester); // NEW!!! (edited)
+    void checkdroppedNugget(Item* actor, Protester* protester); 
     
     
     bool proximityCheck(Actor* actor, int distance);
@@ -83,23 +82,24 @@ public:
     void dropGoldNugget();
     
     void shout(int amount);
-    
-    ///////////////////////////////
-    //// NEW FUNCTIONS ADDED /////
-    /////////////////////////////
+
     bool atAnIntersection(Actor* CPU);
     int ProtesterRestTicks();
     int ProtesterStunTicks();
     
+    //Arthur's Code
     void setDisplayText();
+    int getBarrelCount() const { return m_BarrelCount; }
+    void decBarrelCount() { m_BarrelCount--; }
+    
 private:
     std::vector<Actor*> m_actors;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
     DiggerMan* m_user;
     
+    //Arthur's Code
+    int m_BarrelCount;
     
 };
-
-
 
 #endif // STUDENTWORLD_H_
