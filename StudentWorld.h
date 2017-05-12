@@ -5,19 +5,11 @@
 #include "GameConstants.h"
 #include "GraphObject.h"
 #include "Actor.h"
-/*
- added [#include "Actor.h"] @ 4/5/17 for usage of enum Misc in StudentWorld.cpp
- if this cause any problems in the future,
- we can replace enum Misc with strings instead,
- or find some other alternative. Let me know
- */
-
 
 #include <string>
 #include <vector>
 
 // Students: Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
-
 
 class Actor;
 class DiggerMan;
@@ -100,6 +92,9 @@ private:
     //Arthur's Code
     int m_BarrelCount;
     
+    // David's code
+    int m_protesterSpawnRest;
+    int m_protesterCount;
 };
 
 #endif // STUDENTWORLD_H_
