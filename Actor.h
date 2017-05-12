@@ -31,7 +31,7 @@ class Actor : public GraphObject
 {
 public:
     /* Actor identifiers (for misc objects) */
-    enum Misc { SONARKIT, BARRELOFOIL, SQUIRT, BOULDER, GOLDNUGGET, DROPPEDNUGGET };
+    enum Misc { SONARKIT, BARRELOFOIL, SQUIRT, BOULDER, GOLDNUGGET, DROPPEDNUGGET, WATERPOOL };
     
     
     Actor(StudentWorld* world, int imgID, int x_pos, int y_pos,
@@ -55,10 +55,8 @@ public:
     /* Actor identifiers */
     virtual bool canBlockCharacters() { return false; }
     virtual bool canCollectItems() { return false; }
-    virtual bool hasCellPhoneTracker() { return false; } // NEW!!!
-    
-    virtual bool coordinateCheck(int x, int y); // NEW!!!!!!
-    
+    virtual bool hasCellPhoneTracker() { return false; }
+    virtual bool coordinateCheck(int x, int y);
 private:
     StudentWorld *m_world;
     bool m_alive;
@@ -104,12 +102,11 @@ public:
     int getSonarCharges() { return m_sonarcharges; }
     
     
-    void refillSquirtGun() { m_squirts += 5; }
+    void gainSquirts() { m_squirts += 5; }
     void gainSonarCharge() { m_sonarcharges++; }
     void gainGoldNugget() { m_goldnuggets++; }
     
-    virtual bool coordinateCheck(int x, int y); // NEW!!!!!!
-    
+    virtual bool coordinateCheck(int x, int y);
 private:
     int m_squirts;
     int m_goldnuggets;
@@ -154,27 +151,26 @@ public:
     void setLeaving() { m_leave = true; }
     bool isLeaving() { return m_leave; }
     
-    void pickNewRandomDir();    // NEW!!!!!!!
-    void makeRightAngleTurn(); // NEW!!!!!
+    void pickNewRandomDir();
+    void makeRightAngleTurn();
     
-    void setRestTicks(int ticks) { m_rest = ticks; } // NEW!!
-    int  getRestTicks() const { return m_rest; } // NEW!!!!!
+    void setRestTicks(int ticks) { m_rest = ticks; }
+    int  getRestTicks() const { return m_rest; }
     
-    void setShoutRecovery(int amount) { m_shoutRecovery = amount; } // NEW!!!!
-    int  getShoutRecovery() const { return m_shoutRecovery; }  // NEW!!!!!
+    void setShoutRecovery(int amount) { m_shoutRecovery = amount; }
+    int  getShoutRecovery() const { return m_shoutRecovery; }
+    void setRightAngleTurnRecovery(int amount) { m_rightAngleTurnRecovery = amount; }
+    int  getRightAngleTurnRecovery() const { return m_rightAngleTurnRecovery; }
     
-    void setRightAngleTurnRecovery(int amount) { m_rightAngleTurnRecovery = amount; } // NEW!!!!!
-    int  getRightAngleTurnRecovery() const { return m_rightAngleTurnRecovery; }  // NEW!!!!!
-    
-    int getDistancedTraveled() const { return m_distanceInCurDir; } // NEW!!!!!
+    int getDistancedTraveled() const { return m_distanceInCurDir; }
     
 private:
     bool m_leave; // leaving state of Protester
     int m_shoutRecovery; // rest time after a shout
     
-    int m_distanceInCurDir;        // NEW!!!!!
-    int m_rightAngleTurnRecovery; // NEW!!!!!
-    int m_rest;                  // NEW!!!!!
+    int m_distanceInCurDir;
+    int m_rightAngleTurnRecovery;
+    int m_rest;
 };
 
 /*
@@ -341,8 +337,8 @@ private:
 class SonarKit : public VanishingItem
 {
 public:
-    SonarKit(StudentWorld* world, int x_pos, int y_pos, int ticks)
-    : VanishingItem(world, IMID_SONAR, SONARKIT, x_pos, y_pos, ticks, right, 1.0, 2)
+    SonarKit(StudentWorld* world, int ticks)
+    : VanishingItem(world, IMID_SONAR, SONARKIT, 0, 60, ticks, right, 1.0, 2)
     {
         setVisible(true);
     }
@@ -367,6 +363,16 @@ public:
 private:
 };
 
+class WaterPool : public VanishingItem
+{
+public:
+    WaterPool(StudentWorld* world, int x_pos, int y_pos, int ticks)
+    : VanishingItem(world, IMID_WATER_POOL, WATERPOOL, x_pos, y_pos, ticks, right, 1.0, 2)
+    {
+        setVisible(true);
+    }
+private:
+};
 
 class BarrelOfOil : public Item
 {
@@ -376,12 +382,8 @@ public:
     {
         setVisible(false);
     }
-    
-    
     virtual ~BarrelOfOil() {}
 private:
-    
-    
 };
 
 
@@ -393,17 +395,7 @@ public:
     {
         setVisible(false);
     }
-    
-    
     virtual ~GoldNugget() {}
 private:
 };
-
-
-/* class WaterPool : public VanishingItem
- {
- // add code here
- // do this later
- }
- */
 #endif // ACTOR_H_
