@@ -12,7 +12,7 @@ GameWorld* createStudentWorld(string assetDir)
     return new StudentWorld(assetDir);
 }
 StudentWorld::StudentWorld(std::string assetDir)
-: GameWorld(assetDir), m_user(nullptr), m_BarrelCount(0)
+: GameWorld(assetDir), m_user(nullptr), m_BarrelCount(0), m_protesterCount(0), m_protesterSpawnRest(0)
 {
     // initialize to null to prevent potential access of random garbage memory
     for (int x = 0; x < VIEW_WIDTH; x++)
@@ -61,20 +61,6 @@ void StudentWorld::buildMineShaft()
 
 void StudentWorld::placeObjects()
 {
-    
-    /*
-     NOTE: THE SPAWNING OF PROTESTERS WON'T BE HANDLED HERE
-     ------------------------------------------------------
-     int ticksToWaitBetweenMoves = max(0, 3 - current_level_number/4)
-     
-     int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel() / 4));
-     Actor* new_RegProtestor = new RegularProtester(this, ticksToWaitBetweenMoves);
-     insertActor(new_RegProtestor);
-     
-     Actor* new_HardcoreProtestor = new HardcoreProtester(this, ticksToWaitBetweenMoves);
-     insertActor(new_HardcoreProtestor);
-     */
-    
     // B Boulders in each level, where:
     int B = min(static_cast<int>(getLevel()) / 2 + 2, 7);
     for (int i = 0; i < B; i++)
@@ -92,7 +78,7 @@ void StudentWorld::placeObjects()
         distributeObject(Actor::BARRELOFOIL);
 }
 
-    void StudentWorld::distributeObject(Actor::Misc obj) // [NEW!!]
+    void StudentWorld::distributeObject(Actor::Misc obj)
 {
     
     // get (x, y) coordinate of obj
@@ -149,22 +135,17 @@ int StudentWorld::init()
     // pass 'this' so Diggerman object has access/reference to contents of this StudentWorld
     m_user = new DiggerMan(this);
     
-    
     // insert the actor into the vector
     insertActor(m_user);
-    
     
     // create dirt objects
     refillField();
     
-    
     // build mine shaft
     buildMineShaft();
     
-    
     // distribute game objects around field
     placeObjects();
-    
     
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -181,7 +162,6 @@ int StudentWorld::move()
         return GWSTATUS_PLAYER_DIED;
     }
     
-    
     // asks all the actors to do something
     size_t size = m_actors.size();
     for (size_t i = 0; i < size; i++)
@@ -192,6 +172,81 @@ int StudentWorld::move()
         }
     }
     
+    // get max limit for # of protesters on the oil field
+    int P = min(15.0, 2.0 + static_cast<double>(getLevel()) * 1.5);
+    
+    if (m_protesterSpawnRest <= 0 && m_protesterCount < P) {
+        
+        // prepare for addition of a new Protester
+        Actor* newEntry = nullptr;
+        int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel())/4);
+        
+        // odds of the Protester being Hardcore
+        int probabilityOfHardcore = min(90, static_cast<int>(getLevel()) * 10 + 30);
+        
+        /*
+         rand() % 100 gives a random number between 0-99
+         Imagine that the probability of spawning a Hardcore Protester is 25%, then:
+         
+         0-24 -> will give you a Hardcore Protester (25% chance)
+         25-99 -> will give you a Regular Protester (75% chance)
+         */
+        
+        bool spawnHCProtester = (rand() % 100 < probabilityOfHardcore);
+        
+        if (spawnHCProtester)
+            newEntry = new HardcoreProtester(this, ticksToWaitBetweenMoves);
+        else
+            newEntry = new RegularProtester(this, ticksToWaitBetweenMoves);
+        
+        insertActor(newEntry);
+        m_protesterCount++;
+        m_protesterSpawnRest = max(25, 200 - static_cast<int>(getLevel()));
+    }
+    
+    m_protesterSpawnRest--;
+    
+    // There is a 1 in G chance that a Water Pool or Sonar Kit is added
+    int G = getLevel() * 25 + 300;
+    bool One_in_G = (rand() % G == (G-1));
+    
+    if (One_in_G) {
+        
+        // There's 1/5 chance for Sonar Kit, 4/5 chance for Water Goodie.
+        bool One_in_Five = (rand() % 5 == (5-1));
+        
+        /* add sonar kit */
+        if (One_in_Five) {
+            
+            // the number of ticks T a Sonar Kit will exist
+            int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+            insertActor(new SonarKit(this, T));
+        }
+        
+        /* add water pool */
+        else if (!One_in_Five) {
+            
+            bool waterPoolAdded = false;
+            
+            // find 4x4 square that is free of dirt (and other obstacles as well (i.e. boulders))
+            while (!waterPoolAdded)
+            {
+                int x = rand() % (VIEW_WIDTH-(SPRITE_WIDTH));
+                int y = rand() % (VIEW_HEIGHT-(SPRITE_HEIGHT*2));
+                
+                bool blocked = m_user->Actor::coordinateCheck(x, y);
+                
+                if (blocked)
+                    continue;
+                else {
+                    // the number of ticks T that a Water Pool will exist
+                    int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+                    insertActor(new WaterPool(this, x, y, T));
+                    waterPoolAdded = true;
+                }
+            }
+        }
+    }
     
     // remove any dead actors
     removeDead();
@@ -201,6 +256,11 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
+    // reset for fresh start of the field
+    m_BarrelCount = 0;
+    m_protesterSpawnRest = 0;
+    m_protesterCount = 0;
+    
     // delete all actors (which includes the DiggerMan)
     for (size_t i = 0; i < m_actors.size(); i++)
         delete m_actors[i];
@@ -390,10 +450,10 @@ void StudentWorld::checkItemPickup(Item* obj)
                     playSound(SOUND_GOT_GOODIE);
                     increaseScore(10);
                     break;
-                    // case Actor::WATERPOOL:
-                    // m_user->refillSquirtGun()
-                    // play the sound of water getting collected?
-                    // increaseScore(100);
+                case Actor::WATERPOOL:
+                    m_user->gainSquirts();
+                    playSound(SOUND_GOT_GOODIE);
+                    increaseScore(100);
             }
             obj->setDead();
         }
