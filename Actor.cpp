@@ -301,7 +301,7 @@ void Boulder::doSomething() // NEW!!!! (edited)
             if (m_wait > 0)
                 m_wait--;
             else if (m_wait <= 0) {
-				accessToWorld()->updateNodeMaze(this);
+		accessToWorld()->updateNodeMaze(this);
                 m_state = FALLING;
                 accessToWorld()->playSound(SOUND_FALLING_ROCK);
             }
