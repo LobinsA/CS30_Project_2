@@ -59,6 +59,19 @@ void StudentWorld::buildMineShaft()
         }
 }
 
+void StudentWorld::buildNodeMaze() {
+	for (int x = 0; x < VIEW_WIDTH; x++)
+	{
+		NodeMaze[x][VIEW_HEIGHT - SPRITE_HEIGHT] = new node(x, VIEW_HEIGHT - SPRITE_HEIGHT);
+	}
+	for (int x = 30; x < 34; x++) {
+		for (int y = 4; y < 60; y++)
+		{
+			NodeMaze[x][y] = new node(x, y);
+		}	
+	}
+}
+
 void StudentWorld::placeObjects()
 {
     // B Boulders in each level, where:
@@ -144,6 +157,9 @@ int StudentWorld::init()
     // build mine shaft
     buildMineShaft();
     
+	// creates trailblaze maze
+	buildNodeMaze();
+
     // distribute game objects around field
     placeObjects();
     
@@ -154,13 +170,13 @@ int StudentWorld::move()
 {
     //Display called every tick
     setDisplayText();
-    // check if player is alive
-    if (m_user == nullptr)
-    {
-        decLives();
-        playSound(SOUND_PLAYER_GIVE_UP);
-        return GWSTATUS_PLAYER_DIED;
-    }
+    //// check if player is alive
+    //if (!m_user->isAlive())
+    //{
+    //    decLives();
+    //    playSound(SOUND_PLAYER_GIVE_UP);
+    //    return GWSTATUS_PLAYER_DIED;
+    //}
     
     // asks all the actors to do something
     size_t size = m_actors.size();
@@ -169,8 +185,20 @@ int StudentWorld::move()
         if (m_actors[i]->isAlive())
         {
             m_actors[i]->doSomething();
+			if (!m_user->isAlive())
+			{
+				decLives();
+				playSound(SOUND_PLAYER_GIVE_UP);
+				return GWSTATUS_PLAYER_DIED;
+			}
+			if (getBarrelCount() == 0)		
+			{
+				advanceToNextLevel();
+				return GWSTATUS_FINISHED_LEVEL;
+			}
         }
     }
+    
     
     // get max limit for # of protesters on the oil field
     int P = min(15.0, 2.0 + static_cast<double>(getLevel()) * 1.5);
@@ -771,9 +799,25 @@ bool StudentWorld::removeDirt(Actor* actor)
             }
         }
     }
+	if (actor == m_user)
+	{
+		updateNodeMaze(actor);
+	}
     return removed;
 }
 
+void StudentWorld::updateNodeMaze(Actor* actor) {
+	for (int i = actor->getX(); i < actor->getX() + SPRITE_WIDTH; i++)
+	{
+		for (int j = actor->getY(); j < actor->getY() + SPRITE_HEIGHT; j++)
+		{
+			if (NodeMaze[i][j] == nullptr)
+			{
+				NodeMaze[i][j] = new node(i, j);
+			}
+		}
+	}
+}
 /*
  [] std::vector::erase info [source: cppreference]
  -------------------------
@@ -884,3 +928,47 @@ void StudentWorld::setDisplayText() {
         setGameStatText(s);
     }
 }
+
+
+int rowNum[] = { -1, 0, 0, 1 };
+int colNum[] = { 0, -1, 1, 0 };
+
+void StudentWorld::BFS(node* src, Actor* dest) {
+	// Create a queue for BFS
+	std::queue<node*> q;
+
+	q.push(new node(src->m_x,src->m_y));  
+	// Enqueue source cell
+	// Do a BFS starting from source cell
+	while (!q.empty())
+	{
+		node* curr = q.front();
+		// Otherwise dequeue the front cell in the queue
+		// and enqueue its adjacent cells
+		q.pop();
+
+		for (int i = 0; i < 4; i++)
+		{
+			int row = curr->m_x + rowNum[i];
+			int col = curr->m_y + colNum[i];
+
+//Check adjacent cells in each node of nodeMaze if valid.
+			if (NodeMaze[row][col] != nullptr && NodeMaze[row][col]->m_visited != true)
+			{
+				NodeMaze[row][col]->m_visited = true;
+				// mark cell as visited 
+				NodeMaze[row][col]->m_stepCount+= curr->m_stepCount;
+				// increase the stepcount of the nodemaze by 1
+				node* Adjcell = NodeMaze[row][col];
+				// enqueue cell
+				q.push(Adjcell);
+			}
+		}
+	}
+	// At this point, all known paths in nodeMaze, will be visted, true, and have a stepcount number
+	// Use the nodeMaze to help the protesters reach the lowest stepcount
+	// Once an individual protestor reaches the src node, reset the node's values
+}
+
+
+
