@@ -1,7 +1,6 @@
 #ifndef ACTOR_H_
 #define ACTOR_H_
-//#define ROW VIEW_WIDTH
-//#define COL VIEW_HEIGHT
+
 #include "GraphObject.h"
 #include <algorithm> // added @ 4/20 for use of the max function
 #include <queue>
@@ -404,13 +403,6 @@ public:
 private:
 };
 
-
-
-// ALG START**********************************************************************
-
-
-// function to find the shortest path between
-// a given source cell to a destination cell.
 #endif // ACTOR_H_
 
 
