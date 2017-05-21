@@ -15,7 +15,13 @@ class Actor;
 class DiggerMan;
 class Dirt;
 
-
+struct node {
+	int m_x;
+	int m_y;
+	bool m_visited;
+	int m_stepCount;
+	node(int x, int y) : m_x(x), m_y(y), m_visited(false), m_stepCount(0) { }
+};
 class StudentWorld : public GameWorld
 {
 public:
@@ -83,7 +89,9 @@ public:
     void setDisplayText();
     int getBarrelCount() const { return m_BarrelCount; }
     void decBarrelCount() { m_BarrelCount--; }
-    
+	void buildNodeMaze();
+	void BFS(node* src, Actor* dest);
+	void updateNodeMaze(Actor* actor);
 private:
     std::vector<Actor*> m_actors;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
@@ -91,6 +99,8 @@ private:
     
     //Arthur's Code
     int m_BarrelCount;
+	node* NodeMaze[VIEW_WIDTH - SPRITE_WIDTH][VIEW_HEIGHT - SPRITE_HEIGHT];
+
     
     // David's code
     int m_protesterSpawnRest;
