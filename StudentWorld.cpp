@@ -4,15 +4,15 @@
 #include <sstream>
 using namespace std;
 
-
+// Problem: When all barrels of oil are collected,
+// the level doesn't finish  :\
 
 GameWorld* createStudentWorld(string assetDir)
 {
     return new StudentWorld(assetDir);
 }
-
-
-StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(nullptr)
+StudentWorld::StudentWorld(std::string assetDir)
+: GameWorld(assetDir), m_user(nullptr), m_BarrelCount(0), m_protesterCount(0), m_protesterSpawnRest(0)
 {
     // initialize to null to prevent potential access of random garbage memory
     for (int x = 0; x < VIEW_WIDTH; x++)
@@ -21,12 +21,10 @@ StudentWorld::StudentWorld(std::string assetDir) : GameWorld(assetDir), m_user(n
     // land is initialized
 }
 
-
 StudentWorld::~StudentWorld()
 {
     cleanUp();
 }
-
 
 /*
  [] refillField function info
@@ -42,7 +40,6 @@ void StudentWorld::refillField()
         for (int y = 0; y < VIEW_HEIGHT - SPRITE_HEIGHT; y++)
             m_land[x][y] = new Dirt(this, x, y);
 }
-
 
 /*
  [] buildMineShaft function info
@@ -62,78 +59,81 @@ void StudentWorld::buildMineShaft()
         }
 }
 
+void StudentWorld::buildNodeMaze() {
+	for (int x = 0; x < VIEW_WIDTH; x++)
+	{
+		NodeMaze[x][VIEW_HEIGHT - SPRITE_HEIGHT] = new node(x, VIEW_HEIGHT - SPRITE_HEIGHT);
+	}
+	for (int x = 30; x < 34; x++) {
+		for (int y = 4; y < 60; y++)
+		{
+			NodeMaze[x][y] = new node(x, y);
+		}	
+	}
+}
 
 void StudentWorld::placeObjects()
 {
-    
-    
-    // place Boulder object as test
-    Actor* new_boulder = new Boulder(this, 60, 54);
-    removeDirt(new_boulder);
-    insertActor(new_boulder);
-    
-    
-    Actor* new_boulder2 = new Boulder(this, 60, 30);
-    removeDirt(new_boulder2);
-    insertActor(new_boulder2);
-    
-    
-    // place barrel of oil test
-    Actor* new_oilbarrel = new BarrelOfOil(this, 5, 54);
-    insertActor(new_oilbarrel);
-    
-    
-    // get numof ticks from current level
-    int sonarkitTicks = max(100, (300 - 10 * static_cast<int>(getLevel()))); // NEW!!!
-    
-    
-    // place sonarkit as test
-    Actor* new_sonarkit = new SonarKit(this, 10, 55, sonarkitTicks);
-    insertActor(new_sonarkit);
-    
-    
-    Actor* new_goldnugg = new GoldNugget(this, 40, 55);
-    insertActor(new_goldnugg);
-    
-    
-    /*
-     [] ticksToWaitBetweenMoves info
-     -------------------------------
-     The Regular and Hardcore Protesters must compute a value
-     indicating how often they're allowed to take an action (e.g., once every N ticks).
-     This number of ticks (also known as 'resting ticks') may be computed as follows:
-     
-     int ticksToWaitBetweenMoves = max(0, 3 - current_level_number/4)
-     */
-    
-    int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel() / 4));
-     Actor* new_RegProtestor = new RegularProtester(this, ticksToWaitBetweenMoves);
-    insertActor(new_RegProtestor);
-    
-    Actor* new_HardcoreProtestor = new HardcoreProtester(this, ticksToWaitBetweenMoves);
-    insertActor(new_HardcoreProtestor);
-    
-    
-    
-    
     // B Boulders in each level, where:
-    // int B = min(static_cast<int>(getLevel()) / 2 + 2, 7);
+    int B = min(static_cast<int>(getLevel()) / 2 + 2, 7);
+    for (int i = 0; i < B; i++)
+        distributeObject(Actor::BOULDER);
     
     
     // G Gold Nuggets in each level, where:
-    // int G = max(5-static_cast<int>(getLevel()) / 2, 2);
-    
+    int G = max(5-static_cast<int>(getLevel()) / 2, 2);
+    for (int i = 0; i < G; i++)
+        distributeObject(Actor::GOLDNUGGET);
     
     // L Barrels of oil in each level, where:
-    // int L = min(2 + static_cast<int>(getLevel()), 18);
+    int L = min(2 + static_cast<int>(getLevel()), 18);
+    for (int i = 0; i < L; i++)
+        distributeObject(Actor::BARRELOFOIL);
 }
 
+    void StudentWorld::distributeObject(Actor::Misc obj)
+{
+    
+    // get (x, y) coordinate of obj
+    int x = rand() % 61; // [0-60]
+    int y;
+    
+    if (obj == Actor::BOULDER)
+        y = rand() % 37 + 20; // [0-36]+20 -> [20-56]
+    else
+        y = rand() % 57; // [0-56]
+    
+    // check if any part of the obj
+    // is within the mineshaft
+    if (x >= 26 && x <= 34)
+        return distributeObject(obj); // if so, try again
+    
+    // check if (x, y) is within 6 units of another object
+    for (int i = 0; i < m_actors.size(); i++)
+        if (withinRad(x, y, m_actors[i], 6))
+            return distributeObject(obj); // if so, try again
+    
+    // if passes all the requirements
+    // add actor to the world
+    Actor* newEntry = nullptr;
+    
+    if (obj == Actor::GOLDNUGGET)
+        newEntry = new GoldNugget(this, x, y);
+    else if (obj == Actor::BARRELOFOIL) {
+        newEntry = new BarrelOfOil(this, x, y);
+        m_BarrelCount++;
+    }
+    else if (obj == Actor::BOULDER) {
+        newEntry = new Boulder(this, x, y);
+        removeDirt(newEntry);
+    }
+    insertActor(newEntry);
+}
 
 void StudentWorld::insertActor(Actor* entry)
 {
     m_actors.push_back(entry);
 }
-
 
 /*
  [] Note about the handling of actors within the world
@@ -148,41 +148,35 @@ int StudentWorld::init()
     // pass 'this' so Diggerman object has access/reference to contents of this StudentWorld
     m_user = new DiggerMan(this);
     
-    
     // insert the actor into the vector
     insertActor(m_user);
-    
     
     // create dirt objects
     refillField();
     
-    
     // build mine shaft
     buildMineShaft();
     
-    
+	// creates trailblaze maze
+	buildNodeMaze();
+
     // distribute game objects around field
     placeObjects();
-    
     
     return GWSTATUS_CONTINUE_GAME;
 }
 
-
 int StudentWorld::move()
 {
-    if (m_user != nullptr)
-    {
-	setDisplayText();
-    }
-    // check if player is alive
-    if (m_user == nullptr)
-    {
-        decLives();
-        playSound(SOUND_PLAYER_GIVE_UP);
-        return GWSTATUS_PLAYER_DIED;
-    }
-    
+    //Display called every tick
+    setDisplayText();
+    //// check if player is alive
+    //if (!m_user->isAlive())
+    //{
+    //    decLives();
+    //    playSound(SOUND_PLAYER_GIVE_UP);
+    //    return GWSTATUS_PLAYER_DIED;
+    //}
     
     // asks all the actors to do something
     size_t size = m_actors.size();
@@ -191,9 +185,96 @@ int StudentWorld::move()
         if (m_actors[i]->isAlive())
         {
             m_actors[i]->doSomething();
+			if (!m_user->isAlive())
+			{
+				decLives();
+				playSound(SOUND_PLAYER_GIVE_UP);
+				return GWSTATUS_PLAYER_DIED;
+			}
+			if (getBarrelCount() == 0)		
+			{
+				advanceToNextLevel();
+				return GWSTATUS_FINISHED_LEVEL;
+			}
         }
     }
     
+    
+    // get max limit for # of protesters on the oil field
+    int P = min(15.0, 2.0 + static_cast<double>(getLevel()) * 1.5);
+    
+    if (m_protesterSpawnRest <= 0 && m_protesterCount < P) {
+        
+        // prepare for addition of a new Protester
+        Actor* newEntry = nullptr;
+        int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel())/4);
+        
+        // odds of the Protester being Hardcore
+        int probabilityOfHardcore = min(90, static_cast<int>(getLevel()) * 10 + 30);
+        
+        /*
+         rand() % 100 gives a random number between 0-99
+         Imagine that the probability of spawning a Hardcore Protester is 25%, then:
+         
+         0-24 -> will give you a Hardcore Protester (25% chance)
+         25-99 -> will give you a Regular Protester (75% chance)
+         */
+        
+        bool spawnHCProtester = (rand() % 100 < probabilityOfHardcore);
+        
+        if (spawnHCProtester)
+            newEntry = new HardcoreProtester(this, ticksToWaitBetweenMoves);
+        else
+            newEntry = new RegularProtester(this, ticksToWaitBetweenMoves);
+        
+        insertActor(newEntry);
+        m_protesterCount++;
+        m_protesterSpawnRest = max(25, 200 - static_cast<int>(getLevel()));
+    }
+    
+    m_protesterSpawnRest--;
+    
+    // There is a 1 in G chance that a Water Pool or Sonar Kit is added
+    int G = getLevel() * 25 + 300;
+    bool One_in_G = (rand() % G == (G-1));
+    
+    if (One_in_G) {
+        
+        // There's 1/5 chance for Sonar Kit, 4/5 chance for Water Goodie.
+        bool One_in_Five = (rand() % 5 == (5-1));
+        
+        /* add sonar kit */
+        if (One_in_Five) {
+            
+            // the number of ticks T a Sonar Kit will exist
+            int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+            insertActor(new SonarKit(this, T));
+        }
+        
+        /* add water pool */
+        else if (!One_in_Five) {
+            
+            bool waterPoolAdded = false;
+            
+            // find 4x4 square that is free of dirt (and other obstacles as well (i.e. boulders))
+            while (!waterPoolAdded)
+            {
+                int x = rand() % (VIEW_WIDTH-(SPRITE_WIDTH));
+                int y = rand() % (VIEW_HEIGHT-(SPRITE_HEIGHT*2));
+                
+                bool blocked = m_user->Actor::coordinateCheck(x, y);
+                
+                if (blocked)
+                    continue;
+                else {
+                    // the number of ticks T that a Water Pool will exist
+                    int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+                    insertActor(new WaterPool(this, x, y, T));
+                    waterPoolAdded = true;
+                }
+            }
+        }
+    }
     
     // remove any dead actors
     removeDead();
@@ -201,9 +282,13 @@ int StudentWorld::move()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-
 void StudentWorld::cleanUp()
 {
+    // reset for fresh start of the field
+    m_BarrelCount = 0;
+    m_protesterSpawnRest = 0;
+    m_protesterCount = 0;
+    
     // delete all actors (which includes the DiggerMan)
     for (size_t i = 0; i < m_actors.size(); i++)
         delete m_actors[i];
@@ -298,7 +383,6 @@ bool StudentWorld::BlockedByBoulder(Actor* OneSelf, int x, int y) const
     return false;
 }
 
-
 /*
  [][][][]
  [][][][]
@@ -328,7 +412,6 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
     return false;
 }
 
-
 /*
  [] checkItemPickup function info
  --------------------------------
@@ -336,15 +419,15 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
  then item will be acquired by user
  
  o Barrel of oil: 1000 points
-    the DiggerMan must collect all of the Barrels
-    on the oil field to complete the level
+ the DiggerMan must collect all of the Barrels
+ on the oil field to complete the level
  o Gold Nugget: 10 points
-    the DiggerMan gets 1 piece of gold added to their inventory,
-    which they can subsequently drop to bribe Protesters
+ the DiggerMan gets 1 piece of gold added to their inventory,
+ which they can subsequently drop to bribe Protesters
  o Water: 100 points
-    5 squirts worth of water are added to the DiggerMan's inventory
+ 5 squirts worth of water are added to the DiggerMan's inventory
  o Sonar Kit: 75 points
-    the DiggerMan gets two new sonar charges added to their inventory
+ the DiggerMan gets two new sonar charges added to their inventory
  
  [] Special Case (items non-collectable by user)
  --------------------------------------------
@@ -363,7 +446,7 @@ bool StudentWorld::LayerOfDirt4x1(int x, int y) const
  while a Hardcore Protester looks at gold, then keeps it
  */
 
-void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (edited)
+void StudentWorld::checkItemPickup(Item* obj)
 {
     if (obj->getItemType() == Actor::DROPPEDNUGGET) {
         // iterate thru vector and find any Protesters
@@ -381,7 +464,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
             switch (item)
             {
                 case Actor::BARRELOFOIL:
-                    // ** decrement oil count from world **
+                    decBarrelCount();
                     playSound(SOUND_FOUND_OIL);
                     increaseScore(1000);
                     break;
@@ -395,10 +478,10 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
                     playSound(SOUND_GOT_GOODIE);
                     increaseScore(10);
                     break;
-                    // case Actor::WATERPOOL:
-                    // m_user->refillSquirtGun()
-                    // play the sound of water getting collected?
-                    // increaseScore(100);
+                case Actor::WATERPOOL:
+                    m_user->gainSquirts();
+                    playSound(SOUND_GOT_GOODIE);
+                    increaseScore(100);
             }
             obj->setDead();
         }
@@ -406,7 +489,7 @@ void StudentWorld::checkItemPickup(Item* obj) // UNDER CONSTRUCTION  NEW!!!! (ed
 }
 
 
-void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU) // NEW!!!! (edited)
+void StudentWorld::checkdroppedNugget(Item* obj, Protester* CPU)
 {
     if (CPU->isLeaving())
         return;
@@ -428,7 +511,7 @@ bool StudentWorld::proximityCheck(Actor* actor, int distance)
 }
 
 
-void StudentWorld::shootSquirtGun() // NEW!!!!! (edited)
+void StudentWorld::shootSquirtGun()
 {
     // get user's current coordinate
     int x = m_user->getX();
@@ -491,7 +574,6 @@ void StudentWorld::dropGoldNugget()
  but used under different circumstances
  */
 
-
 bool StudentWorld::withinRad(double x1, double y1, Actor* P2, double radius) const
 {
     // r = sqrt[(x2-x1)^(2) + (y2-y1)^(2)]
@@ -553,7 +635,7 @@ bool StudentWorld::withinRad(Actor* P1, Actor* P2, double radius) const
 bool StudentWorld::CPUspotsUser(Actor* CPU)
 {
     if (withinRad(CPU, m_user, 4)) {
-    
+        
         bool within_x_fov = (m_user->getX() >= CPU->getX() && m_user->getX() <= CPU->getX() + 3);
         bool within_y_fov = (m_user->getY() >= CPU->getY() && m_user->getY() <= CPU->getY() + 3);
         
@@ -574,14 +656,14 @@ bool StudentWorld::CPUspotsUser(Actor* CPU)
     return false;
 }
 
-/* 
+/*
  [] CPUspotsUserfromAFar info
  ----------------------------
  First, the function checks if CPU
  isn't within a radius of 4 of the user
  If it passes that requirement,
  this function will then check if CPU is in:
-    same level vertically or horizontally of the user
+ same level vertically or horizontally of the user
  
  Not only that, but also, if there's no boulder(s) or dirt blocking the path
  The CPU can't see through obstacles (such as dirt or boulders)
@@ -594,7 +676,7 @@ bool StudentWorld::CPUspotsUserfromAFar(Actor* CPU)
         // get CPU's current coordinate
         int x = CPU->getX();
         int y = CPU->getY();
-    
+        
         GraphObject::Direction dirToUser;
         
         // CASE 1: DIRECT LINE-OF-SIGHT VERTICALLY
@@ -651,8 +733,7 @@ void StudentWorld::shout(int amount)
     m_user->annoy(amount);
 }
 
-
-bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points, Actor::Misc object) // NEW!!!! (edited)
+bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points, Actor::Misc object)
 {
     size_t i;
     bool annoyed = false;
@@ -672,8 +753,6 @@ bool StudentWorld::annoyCharactersNearby(Actor* annoyer, int radius, int points,
     }
     return annoyed;
 }
-
-
 
 void StudentWorld::scanForItems()
 {
@@ -720,9 +799,25 @@ bool StudentWorld::removeDirt(Actor* actor)
             }
         }
     }
+	if (actor == m_user)
+	{
+		updateNodeMaze(actor);
+	}
     return removed;
 }
 
+void StudentWorld::updateNodeMaze(Actor* actor) {
+	for (int i = actor->getX(); i < actor->getX() + SPRITE_WIDTH; i++)
+	{
+		for (int j = actor->getY(); j < actor->getY() + SPRITE_HEIGHT; j++)
+		{
+			if (NodeMaze[i][j] == nullptr)
+			{
+				NodeMaze[i][j] = new node(i, j);
+			}
+		}
+	}
+}
 /*
  [] std::vector::erase info [source: cppreference]
  -------------------------
@@ -776,7 +871,7 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
  This will do for now, but if a solution is found where we can
  access function max in both StudentWorld files and Actor files, then that'll be good
  
- Or maybe function(s) where we can gather all 
+ Or maybe function(s) where we can gather all
  the formulas given in the project specs is good?
  So we don't have random usage of formulas scattered throughout the code?
  Idk, you'll be the judge
@@ -790,7 +885,6 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
  This number of ticks (also known as “resting ticks”) may be computed as follows:
  
 	int ticksToWaitBetweenMoves = max(0, 3 – current_level_number/4)
-
  */
 int StudentWorld::ProtesterRestTicks()
 {
@@ -813,7 +907,6 @@ int StudentWorld::ProtesterRestTicks()
  the Hardcore Protester will become fixated on the Nugget and
  will pause to stare at it (just as if he/she were in a resting state – doing nothing else) for the following number of game ticks:
 	ticks_to_stare = max(50, 100 – current_level_number * 10)
-
  
  */
 int StudentWorld::ProtesterStunTicks()
@@ -825,10 +918,57 @@ int StudentWorld::ProtesterStunTicks()
 // Students: Add code to this file (if you wish), StudentWorld.h, Actor.h and Actor.cpp
 
 void StudentWorld::setDisplayText() {
-	// Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
-	std::ostringstream os;
-	os.precision(2);
-	os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << "2" << " Scr: " << getScore();
-	std::string s = os.str();
-	setGameStatText(s);
+    // Lvl: 52 Lives: 3 Hlth: 80% Wtr: 20 Gld: 3 Sonar: 1 Oil Left: 2 Scr: 321000
+    if (m_user != nullptr)
+    {
+        std::ostringstream os;
+        os.precision(2);
+        os << "Lvl: " << getLevel() << " Lives: " << getLives() << " Hlth: " << m_user->getTotalHP() << "0%" << " Wtr: " << m_user->getSquirts() << " Gld: " << m_user->getGoldNuggets() << " Sonar: " << m_user->getSonarCharges() << " Oil Left: " << getBarrelCount() << " Scr: " << getScore();
+        std::string s = os.str();
+        setGameStatText(s);
+    }
 }
+
+
+int rowNum[] = { -1, 0, 0, 1 };
+int colNum[] = { 0, -1, 1, 0 };
+
+void StudentWorld::BFS(node* src, Actor* dest) {
+	// Create a queue for BFS
+	std::queue<node*> q;
+
+	q.push(new node(src->m_x,src->m_y));  
+	// Enqueue source cell
+	// Do a BFS starting from source cell
+	while (!q.empty())
+	{
+		node* curr = q.front();
+		// Otherwise dequeue the front cell in the queue
+		// and enqueue its adjacent cells
+		q.pop();
+
+		for (int i = 0; i < 4; i++)
+		{
+			int row = curr->m_x + rowNum[i];
+			int col = curr->m_y + colNum[i];
+
+//Check adjacent cells in each node of nodeMaze if valid.
+			if (NodeMaze[row][col] != nullptr && NodeMaze[row][col]->m_visited != true)
+			{
+				NodeMaze[row][col]->m_visited = true;
+				// mark cell as visited 
+				NodeMaze[row][col]->m_stepCount+= curr->m_stepCount;
+				// increase the stepcount of the nodemaze by 1
+				node* Adjcell = NodeMaze[row][col];
+				// enqueue cell
+				q.push(Adjcell);
+			}
+		}
+	}
+	// At this point, all known paths in nodeMaze, will be visted, true, and have a stepcount number
+	// Use the nodeMaze to help the protesters reach the lowest stepcount
+	// Once an individual protestor reaches the src node, reset the node's values
+}
+
+
+

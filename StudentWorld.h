@@ -5,31 +5,26 @@
 #include "GameConstants.h"
 #include "GraphObject.h"
 #include "Actor.h"
-/*
- added [#include "Actor.h"] @ 4/5/17 for usage of enum Misc in StudentWorld.cpp
- if this cause any problems in the future,
- we can replace enum Misc with strings instead,
- or find some other alternative. Let me know
- */
-
 
 #include <string>
 #include <vector>
 
-
 // Students: Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
-
 
 class Actor;
 class DiggerMan;
 class Dirt;
 
-
-
+struct node {
+	int m_x;
+	int m_y;
+	bool m_visited;
+	int m_stepCount;
+	node(int x, int y) : m_x(x), m_y(y), m_visited(false), m_stepCount(0) { }
+};
 class StudentWorld : public GameWorld
 {
 public:
-    
     
     StudentWorld(std::string assetDir);
     ~StudentWorld();
@@ -43,6 +38,8 @@ public:
     void refillField();
     void buildMineShaft();
     void placeObjects();
+    void distributeObject(Actor::Misc obj);
+    
     void removeDead();
     
     
@@ -69,7 +66,7 @@ public:
     
     void scanForItems();
     void checkItemPickup(Item* actor);
-    void checkdroppedNugget(Item* actor, Protester* protester); // NEW!!! (edited)
+    void checkdroppedNugget(Item* actor, Protester* protester); 
     
     
     bool proximityCheck(Actor* actor, int distance);
@@ -83,23 +80,31 @@ public:
     void dropGoldNugget();
     
     void shout(int amount);
-    
-    ///////////////////////////////
-    //// NEW FUNCTIONS ADDED /////
-    /////////////////////////////
+
     bool atAnIntersection(Actor* CPU);
     int ProtesterRestTicks();
     int ProtesterStunTicks();
     
+    //Arthur's Code
     void setDisplayText();
+    int getBarrelCount() const { return m_BarrelCount; }
+    void decBarrelCount() { m_BarrelCount--; }
+	void buildNodeMaze();
+	void BFS(node* src, Actor* dest);
+	void updateNodeMaze(Actor* actor);
 private:
     std::vector<Actor*> m_actors;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
     DiggerMan* m_user;
     
+    //Arthur's Code
+    int m_BarrelCount;
+	node* NodeMaze[VIEW_WIDTH - SPRITE_WIDTH][VIEW_HEIGHT - SPRITE_HEIGHT];
+
     
+    // David's code
+    int m_protesterSpawnRest;
+    int m_protesterCount;
 };
-
-
 
 #endif // STUDENTWORLD_H_

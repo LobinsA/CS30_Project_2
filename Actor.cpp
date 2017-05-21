@@ -1,6 +1,7 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
+
 // Students: Add code to this file (if you wish), Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 
@@ -300,6 +301,7 @@ void Boulder::doSomething() // NEW!!!! (edited)
             if (m_wait > 0)
                 m_wait--;
             else if (m_wait <= 0) {
+		accessToWorld()->updateNodeMaze(this);
                 m_state = FALLING;
                 accessToWorld()->playSound(SOUND_FALLING_ROCK);
             }
@@ -494,5 +496,4 @@ bool DiggerMan::coordinateCheck(int x, int y)
     else
         return false;
 }
-
 
