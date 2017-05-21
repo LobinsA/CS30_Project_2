@@ -1,8 +1,10 @@
 #ifndef ACTOR_H_
 #define ACTOR_H_
-
+//#define ROW VIEW_WIDTH
+//#define COL VIEW_HEIGHT
 #include "GraphObject.h"
 #include <algorithm> // added @ 4/20 for use of the max function
+#include <queue>
 
 /*
  [] Notes on Actor identifiers
@@ -23,9 +25,7 @@
 
 // Students: Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
-
 class StudentWorld;
-
 
 class Actor : public GraphObject
 {
@@ -57,6 +57,11 @@ public:
     virtual bool canCollectItems() { return false; }
     virtual bool hasCellPhoneTracker() { return false; }
     virtual bool coordinateCheck(int x, int y);
+
+
+	//temp
+	//int BFS(int mat[][COL], Point src, Point dest);
+
 private:
     StudentWorld *m_world;
     bool m_alive;
@@ -380,7 +385,7 @@ public:
     BarrelOfOil(StudentWorld* world, int x_pos, int y_pos)
     : Item(world, IMID_BARREL, BARRELOFOIL, x_pos, y_pos, right, 1.0, 2)
     {
-        setVisible(false);
+		setVisible(false);
     }
     virtual ~BarrelOfOil() {}
 private:
@@ -398,4 +403,15 @@ public:
     virtual ~GoldNugget() {}
 private:
 };
+
+
+
+// ALG START**********************************************************************
+
+
+// function to find the shortest path between
+// a given source cell to a destination cell.
 #endif // ACTOR_H_
+
+
+
