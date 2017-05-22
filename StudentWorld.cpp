@@ -957,7 +957,7 @@ void StudentWorld::BFS(node* src, Actor* dest) {
 			{
 				NodeMaze[row][col]->m_visited = true;
 				// mark cell as visited 
-				NodeMaze[row][col]->m_stepCount+= curr->m_stepCount;
+				NodeMaze[row][col]->m_stepCount = 1 + curr->m_stepCount;
 				// increase the stepcount of the nodemaze by 1
 				node* Adjcell = NodeMaze[row][col];
 				// enqueue cell
