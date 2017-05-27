@@ -169,14 +169,14 @@ void Protester::doSomething() // UNDER CONSTRUCTION
     
     // (3) complicated queue-based maze searching portion (descript. found on pg. 40)
     if (isLeaving()) {
-        // add code here
+        // check if protester has a path to the exit
         if(!path.empty()) {
+         // if so, move one coordinate at a time towards the exit
             pathNode p = path.front();
             setDirection(p.m_dir);
             moveTo(p.m_x, p.m_y);
-            
             path.pop();
-            
+            // the last remaining element in the queue should be the exit coordinate
             if (getX() == 60 && getY() == 60) {
                 setDead();
                 accessToWorld()->decProtesterCount();
@@ -185,6 +185,7 @@ void Protester::doSomething() // UNDER CONSTRUCTION
         else {
             accessToWorld()->BFS(node(60, 60), this);
             accessToWorld()->followShortestPath(this, node(60, 60));
+         // reset the maze for future use (i.e. when another Protester is set to leaving state)
             accessToWorld()->resetNodeMaze();
         }
         return;
