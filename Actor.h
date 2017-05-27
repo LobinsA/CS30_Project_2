@@ -56,11 +56,11 @@ public:
     virtual bool canCollectItems() { return false; }
     virtual bool hasCellPhoneTracker() { return false; }
     virtual bool coordinateCheck(int x, int y);
-
-
-	//temp
-	//int BFS(int mat[][COL], Point src, Point dest);
-
+    
+    
+    //temp
+    //int BFS(int mat[][COL], Point src, Point dest);
+    
 private:
     StudentWorld *m_world;
     bool m_alive;
@@ -168,6 +168,8 @@ public:
     
     int getDistancedTraveled() const { return m_distanceInCurDir; }
     
+    void addToPath(int x, int y, Direction d) { path.push(pathNode(x, y, d));  }
+    
 private:
     bool m_leave; // leaving state of Protester
     int m_shoutRecovery; // rest time after a shout
@@ -175,6 +177,16 @@ private:
     int m_distanceInCurDir;
     int m_rightAngleTurnRecovery;
     int m_rest;
+    
+    struct pathNode
+    {
+        pathNode(int x, int y, Direction d) : m_x(x), m_y(y), m_dir(d) {}
+        int m_x;
+        int m_y;
+        Direction m_dir;
+    };
+    
+    std::queue<pathNode> path;
 };
 
 /*
@@ -190,7 +202,7 @@ private:
  4. Each Regular Protester starts out with 5 hit-points.
  5. Each Regular Protester starts out NOT in a leave-the-oil-field state.
  6. Each Regular Protester have the following graphic parameters:
- a. It has an image depth of 0 ñ theyíre always in the foreground
+ a. It has an image depth of 0 Ò theyÌre always in the foreground
  b. It has a size of 1.0
  */
 
@@ -218,11 +230,11 @@ private:
  4. Each Hardcore Protester starts out with 20 hit-points.
  5. Each Hardcore Protester starts out NOT in a leave-the-oil-field state.
  6. Each Hardcore Protester have the following graphic parameters:
- a. It has an image depth of 0 ñ theyíre always in the foreground
+ a. It has an image depth of 0 Ò theyÌre always in the foreground
  b. It has a size of 1.0
  
  In addition to any other initialization that you decide to do in your Hardcore Protesters class,
- a Hardcore Protester object must set itself to be visible using the GraphObject classís setVisible() method, e.g.:
+ a Hardcore Protester object must set itself to be visible using the GraphObject classÌs setVisible() method, e.g.:
  
  setVisible(true);
  */
@@ -384,7 +396,7 @@ public:
     BarrelOfOil(StudentWorld* world, int x_pos, int y_pos)
     : Item(world, IMID_BARREL, BARRELOFOIL, x_pos, y_pos, right, 1.0, 2)
     {
-		setVisible(false);
+        setVisible(false);
     }
     virtual ~BarrelOfOil() {}
 private:
@@ -404,6 +416,3 @@ private:
 };
 
 #endif // ACTOR_H_
-
-
-
