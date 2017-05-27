@@ -952,7 +952,7 @@ void StudentWorld::BFS(node src, Actor* dest) {
     // Do a BFS starting from source cell
     q.push(node(src.m_x, src.m_y));
     
-    // mark the source node as visited since we're right on top of it
+    // mark the source cell as visited since we're right on top of it
     NodeMaze[src.m_x][src.m_y]->m_visited = true;
     
     int rowNum[] = { -1, 0, 0, 1 };
@@ -984,7 +984,6 @@ void StudentWorld::BFS(node src, Actor* dest) {
                 NodeMaze[row][col]->m_visited = true; 
                 // increase the stepcount of the nodemaze by 1
                 NodeMaze[row][col]->m_stepCount = 1 + curr.m_stepCount;
-                // node* Adjcell = NodeMaze[row][col];
                 // enqueue cell
                 q.push(node(row, col, NodeMaze[row][col]->m_stepCount));
             }
@@ -1038,10 +1037,9 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
             // check if the node's stepcount is smaller than the current min
             // OR if min hasn't been assigned yet (due to obstacles blocking path)
             if (NodeMaze[x][y - 1]->m_stepCount < minNode.getMinCount() || minNode.getMinCount() == 0) {
-                
+              
                 // keep track of node with smallest stepcount
                 minNode.updateMin(x, y - 1, GraphObject::down, NodeMaze[x][y - 1]->m_stepCount);
-                
             }
         }
         
@@ -1084,7 +1082,7 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
                 minNode.updateMin(x-1, y, GraphObject::left, NodeMaze[x-1][y]->m_stepCount);
             }
         }
-        // whatever was the node with the smallest stepcount,
+        // whatever the node with the smallest stepcount was,
         // add it to the path
         x = minNode.m_x;
         y = minNode.m_y;
