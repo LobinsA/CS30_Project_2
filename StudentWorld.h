@@ -102,7 +102,7 @@ public:
 	void decBarrelCount() { m_BarrelCount--; }
 	void incrProtesterCount() { m_protesterCount++; }
 	void decProtesterCount() { m_protesterCount--; }
-	void BFS(node src, Actor* dest);
+	int BFS(node src, Actor* dest);
 	void followShortestPath(Protester* CPU, node dest);
 	void buildNodeMaze();
 	void updateNodeMaze(Actor* actor);
