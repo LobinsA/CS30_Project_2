@@ -1006,7 +1006,7 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
 		node minNode;
 
 		// check up
-		if (NodeMaze[x][y + 1] != nullptr && NodeMaze[x][y + 1]->m_visited == true) {
+		if (!outOfBounds(x, y+1) && NodeMaze[x][y + 1] != nullptr && NodeMaze[x][y + 1]->m_visited == true) {
 
 			// if that step is the exit point
 			if ((x == dest.m_x) && (y + 1 == dest.m_y)) {
@@ -1023,7 +1023,7 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
 		}
 
 		// check down
-		if (NodeMaze[x][y - 1] != nullptr && NodeMaze[x][y - 1]->m_visited == true) {
+		if (!outOfBounds(x, y - 1) && NodeMaze[x][y - 1] != nullptr && NodeMaze[x][y - 1]->m_visited == true) {
 
 			//  if that step is the exit point
 			if ((x == dest.m_x) && (y - 1 == dest.m_y)) {
@@ -1044,7 +1044,7 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
 		}
 
 		// check right
-		if (NodeMaze[x + 1][y] != nullptr && NodeMaze[x + 1][y]->m_visited == true)
+		if (!outOfBounds(x+1, y) && NodeMaze[x + 1][y] != nullptr && NodeMaze[x + 1][y]->m_visited == true)
 		{
 			// see if that step is the exit point
 			if ((x + 1 == dest.m_x) && (y == dest.m_y)) {
@@ -1065,7 +1065,7 @@ void StudentWorld::followShortestPath(Protester* CPU, node dest)
 		}
 
 		// check left
-		if (NodeMaze[x - 1][y] != nullptr && NodeMaze[x - 1][y]->m_visited == true) {
+		if (!outOfBounds(x - 1, y) && NodeMaze[x - 1][y] != nullptr && NodeMaze[x - 1][y]->m_visited == true) {
 
 			// see if that step is the exit point
 			if (x - 1 == dest.m_x && y == dest.m_y) {
