@@ -19,7 +19,7 @@ What blocks DiggerMan?:
 
 The coordinateCheck function will handle these differences
 */
-bool Actor::makeMove() // NEW!!! (edited)
+bool Actor::makeMove()
 {
 	// get actor's current coordinate (x, y)
 	int x = getX();
@@ -41,20 +41,11 @@ bool Actor::makeMove() // NEW!!! (edited)
 }
 
 
-void DiggerMan::doSomething() // UNDER CONSTRUCTION
+void DiggerMan::doSomething()
 {
 	// check alive status
 	if (isAlive() == false)
 		return;
-
-
-	// see if 4x4 sprite overlaps any dirt
-	bool dirtWasRemoved = accessToWorld()->removeDirt(this);
-
-
-	if (dirtWasRemoved)
-		accessToWorld()->playSound(SOUND_DIG);
-
 
 	// get user input
 	int userInput;
@@ -125,8 +116,15 @@ void DiggerMan::doSomething() // UNDER CONSTRUCTION
 		case'C':
 			int T = accessToWorld()->ProtesterRestTicks();
 			accessToWorld()->insertActor(new RegularProtester(accessToWorld(), getX(), getY(), T));
+			accessToWorld()->incrProtesterCount();
 			break;
 		}
+		// see if 4x4 sprite overlaps any dirt
+		bool dirtWasRemoved = accessToWorld()->removeDirt(this);
+
+
+		if (dirtWasRemoved)
+			accessToWorld()->playSound(SOUND_DIG);
 	}
 }
 
