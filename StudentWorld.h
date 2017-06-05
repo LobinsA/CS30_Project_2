@@ -100,6 +100,7 @@ public:
 	void setDisplayText();
 	int getBarrelCount() const { return m_BarrelCount; }
 	void decBarrelCount() { m_BarrelCount--; }
+	void incrProtesterCount() { m_protesterCount++; }
 	void decProtesterCount() { m_protesterCount--; }
 	void BFS(node src, Actor* dest);
 	void followShortestPath(Protester* CPU, node dest);
