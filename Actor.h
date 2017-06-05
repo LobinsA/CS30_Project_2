@@ -145,6 +145,7 @@ public:
 		setVisible(true);
 	}
 
+	// overloaded c'tor for testing purposes only!!! (ignore)
 	Protester(StudentWorld* world, int x, int y, int imgID, int hp, int ticks)
 		: Character(world, imgID, x, y, hp, left)
 	{
@@ -197,6 +198,8 @@ private:
 	};
 
 	std::queue<pathNode> path;
+
+	virtual void doSomething_aux() { return;}
 };
 
 /*
@@ -222,7 +225,7 @@ public:
 	RegularProtester(StudentWorld* world, int ticks)
 		: Protester(world, IMID_PROTESTER, 5, ticks) {}
 
-	// overloaded c'tor for testing purposes only!!!
+	// overloaded c'tor for testing purposes only!!! (ignore)
 	RegularProtester(StudentWorld* world, int x, int y, int ticks)
 		: Protester(world, x, y, IMID_PROTESTER, 5, ticks) {}
 
@@ -256,13 +259,15 @@ setVisible(true);
 class HardcoreProtester : public Protester
 {
 public:
-	HardcoreProtester(StudentWorld* world, int ticks)
-		: Protester(world, IMID_HARD_CORE_PROTESTER, 20, ticks) {}
+	HardcoreProtester(StudentWorld* world, Actor* user, int ticks)
+		: Protester(world, IMID_HARD_CORE_PROTESTER, 20, ticks) { user_tracker = user; }
 
 	virtual ~HardcoreProtester() {}
 	virtual bool hasCellPhoneTracker() { return true; }
 	virtual void collectGold();
 private:
+	Actor* user_tracker;
+	virtual void doSomething_aux();
 
 };
 
