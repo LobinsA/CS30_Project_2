@@ -207,12 +207,22 @@ void Protester::doSomething() // UNDER CONSTRUCTION
 
 
 	// (4.5) [specific Hardcore Protester action] (descript found on pg. 45)
-	/*
 	if (hasCellPhoneTracker() && !accessToWorld()->proximityCheck(this, 4))
 	{
-	// uncomment and add code here
+		if (!path.empty()) {
+			pathNode p = path.front();
+			setDirection(p.m_dir);
+			moveTo(p.m_x, p.m_y);
+			path.pop();
+			setRestTicks(accessToWorld()->ProtesterRestTicks());
+			return;
+		}
+		else {
+			doSomething_aux();
+			if (!path.empty())
+				return;
+		}
 	}
-	*/
 
 
 	// (5) if user not within 4 units of user
@@ -245,6 +255,25 @@ void Protester::doSomething() // UNDER CONSTRUCTION
 	// If it is somehow blocked, set distance to 0, then rinse & repeat this whole process
 	if (!makeMove())
 		m_distanceInCurDir = 0;
+}
+
+void HardcoreProtester::doSomething_aux()
+{
+	// a. Compute a value M, such that M = 16 + current_level_number * 2
+	int M = 16 + accessToWorld()->getLevel() * 2;
+	/* 
+	b.If the Hardcore Protester is less than or equal to 
+	a total of M legal horizontal or vertical moves away from the current location of the DiggerMan
+	(as can be determined using the same basic queue - based maze - searching algorithm)
+	*/
+	int stepsToUser = accessToWorld()->BFS(node(user_tracker->getX(), user_tracker->getY()), this);
+
+	if (stepsToUser <= M) {
+		accessToWorld()->playSound(SOUND_FALLING_ROCK);
+		accessToWorld()->followShortestPath(this, node(user_tracker->getX(), user_tracker->getY()));
+
+	}
+	accessToWorld()->resetNodeMaze();
 }
 
 /*
