@@ -191,7 +191,6 @@ int StudentWorld::move()
 			}
 			if (getBarrelCount() == 0)
 			{
-				// advanceToNextLevel();
 				return GWSTATUS_FINISHED_LEVEL;
 			}
 		}
@@ -221,7 +220,7 @@ int StudentWorld::move()
 		bool spawnHCProtester = (rand() % 100 < probabilityOfHardcore);
 
 		if (spawnHCProtester)
-			newEntry = new HardcoreProtester(this, ticksToWaitBetweenMoves);
+			newEntry = new HardcoreProtester(this, m_user, ticksToWaitBetweenMoves);
 		else
 			newEntry = new RegularProtester(this, ticksToWaitBetweenMoves);
 
@@ -944,7 +943,7 @@ void StudentWorld::setDisplayText() {
 }
 
 
-void StudentWorld::BFS(node src, Actor* dest) {
+int StudentWorld::BFS(node src, Actor* dest) {
 	// Create a queue for BFS
 	std::queue<node> q;
 
@@ -968,7 +967,7 @@ void StudentWorld::BFS(node src, Actor* dest) {
 		// check if destination is reached
 		if (curr.m_x == dest->getX() && curr.m_y == dest->getY()) {
 			NodeMaze[curr.m_x][curr.m_y]->m_visited = true;
-			return;
+			return NodeMaze[curr.m_x][curr.m_y]->m_stepCount;
 			// the BFS is done!
 		}
 
@@ -989,6 +988,7 @@ void StudentWorld::BFS(node src, Actor* dest) {
 			}
 		}
 	}
+	return 0; // shouldn't reach here
 	// At this point, all known paths in nodeMaze, will be visted, true, and have a stepcount number
 	// Use the nodeMaze to help the protesters reach the lowest stepcount
 	// Once an individual protestor reaches the src node, reset the node's values
