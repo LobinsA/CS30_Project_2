@@ -4,8 +4,6 @@
 #include <sstream>
 using namespace std;
 
-// Problem: When all barrels of oil are collected,
-// the level doesn't finish  :\
 
 GameWorld* createStudentWorld(string assetDir)
 {
@@ -60,16 +58,23 @@ void StudentWorld::buildMineShaft()
 }
 
 void StudentWorld::buildNodeMaze() {
-	for (int x = 0; x < VIEW_WIDTH; x++)
-	{
-		NodeMaze[x][VIEW_HEIGHT - SPRITE_HEIGHT] = new node(x, VIEW_HEIGHT - SPRITE_HEIGHT);
-	}
-	for (int x = 30; x < 34; x++) {
-		for (int y = 4; y < 60; y++)
-		{
-			NodeMaze[x][y] = new node(x, y);
-		}	
-	}
+    
+    // set the maze grids to nullptr
+    for (int i = 0; i < VIEW_WIDTH; i++) {
+        for (int j = 0; j < VIEW_HEIGHT; j++)
+            NodeMaze[i][j] = nullptr;
+    }
+    
+    // cover the top part of the 'T'
+    for (int i = 0; i <= VIEW_WIDTH - SPRITE_HEIGHT; i++) {
+        NodeMaze[i][VIEW_HEIGHT - SPRITE_HEIGHT] = new node(i, VIEW_HEIGHT - SPRITE_HEIGHT);
+    }
+    
+    // cover the initial mineshaft
+    for (int i = 30; i < 34; i++) {
+        for (int j = 4; j < 60; j++)
+            NodeMaze[i][j] = new node(i, j);
+    }
 }
 
 void StudentWorld::placeObjects()
@@ -81,7 +86,7 @@ void StudentWorld::placeObjects()
     
     
     // G Gold Nuggets in each level, where:
-    int G = max(5-static_cast<int>(getLevel()) / 2, 2);
+    int G = max(5 - static_cast<int>(getLevel()) / 2, 2);
     for (int i = 0; i < G; i++)
         distributeObject(Actor::GOLDNUGGET);
     
@@ -91,7 +96,7 @@ void StudentWorld::placeObjects()
         distributeObject(Actor::BARRELOFOIL);
 }
 
-    void StudentWorld::distributeObject(Actor::Misc obj)
+void StudentWorld::distributeObject(Actor::Misc obj)
 {
     
     // get (x, y) coordinate of obj
@@ -157,9 +162,9 @@ int StudentWorld::init()
     // build mine shaft
     buildMineShaft();
     
-	// creates trailblaze maze
-	buildNodeMaze();
-
+    // creates trailblaze maze
+    buildNodeMaze();
+    
     // distribute game objects around field
     placeObjects();
     
@@ -170,13 +175,6 @@ int StudentWorld::move()
 {
     //Display called every tick
     setDisplayText();
-    //// check if player is alive
-    //if (!m_user->isAlive())
-    //{
-    //    decLives();
-    //    playSound(SOUND_PLAYER_GIVE_UP);
-    //    return GWSTATUS_PLAYER_DIED;
-    //}
     
     // asks all the actors to do something
     size_t size = m_actors.size();
@@ -185,17 +183,16 @@ int StudentWorld::move()
         if (m_actors[i]->isAlive())
         {
             m_actors[i]->doSomething();
-			if (!m_user->isAlive())
-			{
-				decLives();
-				playSound(SOUND_PLAYER_GIVE_UP);
-				return GWSTATUS_PLAYER_DIED;
-			}
-			if (getBarrelCount() == 0)		
-			{
-				advanceToNextLevel();
-				return GWSTATUS_FINISHED_LEVEL;
-			}
+            if (!m_user->isAlive())
+            {
+                decLives();
+                playSound(SOUND_PLAYER_GIVE_UP);
+                return GWSTATUS_PLAYER_DIED;
+            }
+            if (getBarrelCount() == 0)
+            {
+                return GWSTATUS_FINISHED_LEVEL;
+            }
         }
     }
     
@@ -207,7 +204,7 @@ int StudentWorld::move()
         
         // prepare for addition of a new Protester
         Actor* newEntry = nullptr;
-        int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel())/4);
+        int ticksToWaitBetweenMoves = max(0, 3 - static_cast<int>(getLevel()) / 4);
         
         // odds of the Protester being Hardcore
         int probabilityOfHardcore = min(90, static_cast<int>(getLevel()) * 10 + 30);
@@ -223,7 +220,7 @@ int StudentWorld::move()
         bool spawnHCProtester = (rand() % 100 < probabilityOfHardcore);
         
         if (spawnHCProtester)
-            newEntry = new HardcoreProtester(this, ticksToWaitBetweenMoves);
+            newEntry = new HardcoreProtester(this, m_user, ticksToWaitBetweenMoves);
         else
             newEntry = new RegularProtester(this, ticksToWaitBetweenMoves);
         
@@ -236,18 +233,18 @@ int StudentWorld::move()
     
     // There is a 1 in G chance that a Water Pool or Sonar Kit is added
     int G = getLevel() * 25 + 300;
-    bool One_in_G = (rand() % G == (G-1));
+    bool One_in_G = (rand() % G == (G - 1));
     
     if (One_in_G) {
         
         // There's 1/5 chance for Sonar Kit, 4/5 chance for Water Goodie.
-        bool One_in_Five = (rand() % 5 == (5-1));
+        bool One_in_Five = (rand() % 5 == (5 - 1));
         
         /* add sonar kit */
         if (One_in_Five) {
             
             // the number of ticks T a Sonar Kit will exist
-            int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+            int T = max(100, 300 - 10 * static_cast<int>(getLevel()));
             insertActor(new SonarKit(this, T));
         }
         
@@ -259,8 +256,8 @@ int StudentWorld::move()
             // find 4x4 square that is free of dirt (and other obstacles as well (i.e. boulders))
             while (!waterPoolAdded)
             {
-                int x = rand() % (VIEW_WIDTH-(SPRITE_WIDTH));
-                int y = rand() % (VIEW_HEIGHT-(SPRITE_HEIGHT*2));
+                int x = rand() % (VIEW_WIDTH - (SPRITE_WIDTH));
+                int y = rand() % (VIEW_HEIGHT - (SPRITE_HEIGHT * 2));
                 
                 bool blocked = m_user->Actor::coordinateCheck(x, y);
                 
@@ -268,7 +265,7 @@ int StudentWorld::move()
                     continue;
                 else {
                     // the number of ticks T that a Water Pool will exist
-                    int T = max(100, 300 - 10*static_cast<int>(getLevel()));
+                    int T = max(100, 300 - 10 * static_cast<int>(getLevel()));
                     insertActor(new WaterPool(this, x, y, T));
                     waterPoolAdded = true;
                 }
@@ -289,6 +286,8 @@ void StudentWorld::cleanUp()
     m_protesterSpawnRest = 0;
     m_protesterCount = 0;
     
+    destroyNodeMaze();
+    
     // delete all actors (which includes the DiggerMan)
     for (size_t i = 0; i < m_actors.size(); i++)
         delete m_actors[i];
@@ -300,6 +299,26 @@ void StudentWorld::cleanUp()
     for (int x = 0; x < VIEW_WIDTH; x++)
         for (int y = 0; y < VIEW_HEIGHT; y++)
             delete m_land[x][y];
+}
+
+void StudentWorld::resetNodeMaze()
+{
+    for (int i = 0; i < VIEW_WIDTH; i++) {
+        for (int j = 0; j < VIEW_HEIGHT; j++) {
+            if (NodeMaze[i][j] != nullptr) {
+                NodeMaze[i][j]->m_stepCount = 0;
+                NodeMaze[i][j]->m_visited = false;
+            }
+        }
+    }
+}
+void StudentWorld::destroyNodeMaze()
+{
+    for (int i = 0; i < VIEW_WIDTH; i++) {
+        for (int j = 0; j < VIEW_HEIGHT; j++)
+            if (NodeMaze[i][j] != nullptr)
+                delete NodeMaze[i][j];
+    }
 }
 
 /*
@@ -799,24 +818,18 @@ bool StudentWorld::removeDirt(Actor* actor)
             }
         }
     }
-	if (actor == m_user)
-	{
-		updateNodeMaze(actor);
-	}
+    if (actor == m_user)
+    {
+        updateNodeMaze(actor);
+    }
     return removed;
 }
 
 void StudentWorld::updateNodeMaze(Actor* actor) {
-	for (int i = actor->getX(); i < actor->getX() + SPRITE_WIDTH; i++)
-	{
-		for (int j = actor->getY(); j < actor->getY() + SPRITE_HEIGHT; j++)
-		{
-			if (NodeMaze[i][j] == nullptr)
-			{
-				NodeMaze[i][j] = new node(i, j);
-			}
-		}
-	}
+    for (int i = actor->getX(); i < actor->getX() + SPRITE_WIDTH; i++)
+        for (int j = actor->getY(); j < actor->getY() + SPRITE_HEIGHT; j++)
+            if (NodeMaze[i][j] == nullptr)
+                NodeMaze[i][j] = new node(i, j);
 }
 /*
  [] std::vector::erase info [source: cppreference]
@@ -857,7 +870,7 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
     
     // check if one square [up, down, left, or right] from CPU is blocked
     for (int i = -1; i < 2; i += 2)
-        if (CPU->coordinateCheck(x, y+i) || CPU->coordinateCheck(x+i, y))
+        if (CPU->coordinateCheck(x, y + i) || CPU->coordinateCheck(x + i, y))
             return false;
     // if not, we're at an intersection
     return true;
@@ -881,10 +894,10 @@ bool StudentWorld::atAnIntersection(Actor* CPU)
  [] ProtesterRestTicks info
  --------------------------
  A Protester must compute a value
- indicating how often they’re allowed to take an action (e.g., once every N ticks).
- This number of ticks (also known as “resting ticks”) may be computed as follows:
+ indicating how often theyíre allowed to take an action (e.g., once every N ticks).
+ This number of ticks (also known as ìresting ticksî) may be computed as follows:
  
-	int ticksToWaitBetweenMoves = max(0, 3 – current_level_number/4)
+ int ticksToWaitBetweenMoves = max(0, 3 ñ current_level_number/4)
  */
 int StudentWorld::ProtesterRestTicks()
 {
@@ -896,17 +909,17 @@ int StudentWorld::ProtesterRestTicks()
  [] ProtesterStunTicks info
  --------------------------
  After its hit-points have been decremented, and
- the Protester hasn’t been completely annoyed
+ the Protester hasnít been completely annoyed
  (to the point it wants to leave the oil field)
- It will then be “stunned” and placed in a
+ It will then be ìstunnedî and placed in a
  resting state for N resting ticks, where:
  
-	N = max(50, 100 – current_level_number * 10)
+ N = max(50, 100 ñ current_level_number * 10)
  
  After picking up gold nugget,
  the Hardcore Protester will become fixated on the Nugget and
- will pause to stare at it (just as if he/she were in a resting state – doing nothing else) for the following number of game ticks:
-	ticks_to_stare = max(50, 100 – current_level_number * 10)
+ will pause to stare at it (just as if he/she were in a resting state ñ doing nothing else) for the following number of game ticks:
+ ticks_to_stare = max(50, 100 ñ current_level_number * 10)
  
  */
 int StudentWorld::ProtesterStunTicks()
@@ -930,45 +943,149 @@ void StudentWorld::setDisplayText() {
 }
 
 
-int rowNum[] = { -1, 0, 0, 1 };
-int colNum[] = { 0, -1, 1, 0 };
-
-void StudentWorld::BFS(node* src, Actor* dest) {
-	// Create a queue for BFS
-	std::queue<node*> q;
-
-	q.push(new node(src->m_x,src->m_y));  
-	// Enqueue source cell
-	// Do a BFS starting from source cell
-	while (!q.empty())
-	{
-		node* curr = q.front();
-		// Otherwise dequeue the front cell in the queue
-		// and enqueue its adjacent cells
-		q.pop();
-
-		for (int i = 0; i < 4; i++)
-		{
-			int row = curr->m_x + rowNum[i];
-			int col = curr->m_y + colNum[i];
-
-//Check adjacent cells in each node of nodeMaze if valid.
-			if (NodeMaze[row][col] != nullptr && NodeMaze[row][col]->m_visited != true)
-			{
-				NodeMaze[row][col]->m_visited = true;
-				// mark cell as visited 
-				NodeMaze[row][col]->m_stepCount = 1 + curr->m_stepCount;
-				// increase the stepcount of the nodemaze by 1
-				node* Adjcell = NodeMaze[row][col];
-				// enqueue cell
-				q.push(Adjcell);
-			}
-		}
-	}
-	// At this point, all known paths in nodeMaze, will be visted, true, and have a stepcount number
-	// Use the nodeMaze to help the protesters reach the lowest stepcount
-	// Once an individual protestor reaches the src node, reset the node's values
+int StudentWorld::BFS(node src, Actor* dest) {
+    // Create a queue for BFS
+    std::queue<node> q;
+    
+    // Enqueue source cell
+    // Do a BFS starting from source cell
+    q.push(node(src.m_x, src.m_y));
+    
+    // mark the source cell as visited since we're right on top of it
+    NodeMaze[src.m_x][src.m_y]->m_visited = true;
+    
+    int rowNum[] = { -1, 0, 0, 1 };
+    int colNum[] = { 0, -1, 1, 0 };
+    
+    while (!q.empty())
+    {
+        node curr = q.front();
+        // Otherwise dequeue the front cell in the queue
+        // and enqueue its adjacent cells
+        q.pop();
+        
+        // check if destination is reached
+        if (curr.m_x == dest->getX() && curr.m_y == dest->getY()) {
+            NodeMaze[curr.m_x][curr.m_y]->m_visited = true;
+            return NodeMaze[curr.m_x][curr.m_y]->m_stepCount;
+            // the BFS is done!
+        }
+        
+        for (int i = 0; i < 4; i++)
+        {
+            int row = curr.m_x + rowNum[i];
+            int col = curr.m_y + colNum[i];
+            
+            //Check adjacent cells in each node of nodeMaze if valid.
+            if (!dest->coordinateCheck(row, col) && NodeMaze[row][col] != nullptr && NodeMaze[row][col]->m_visited != true)
+            {
+                // mark cell as visited
+                NodeMaze[row][col]->m_visited = true;
+                // increase the stepcount of the nodemaze by 1
+                NodeMaze[row][col]->m_stepCount = 1 + curr.m_stepCount;
+                // enqueue cell
+                q.push(node(row, col, NodeMaze[row][col]->m_stepCount));
+            }
+        }
+    }
+    return 0; // shouldn't reach here
+    // At this point, all known paths in nodeMaze, will be visted, true, and have a stepcount number
+    // Use the nodeMaze to help the protesters reach the lowest stepcount
+    // Once an individual protestor reaches the src node, reset the node's values
 }
 
-
-
+void StudentWorld::followShortestPath(Protester* CPU, node dest)
+{
+    // get CPU's current coordinate
+    int x = CPU->getX();
+    int y = CPU->getY();
+    GraphObject::Direction d = GraphObject::none;
+    
+    while (true) {
+        
+        node minNode;
+        
+        // check up
+        if (!outOfBounds(x, y+1) && NodeMaze[x][y + 1] != nullptr && NodeMaze[x][y + 1]->m_visited == true) {
+            
+            // if that step is the exit point
+            if ((x == dest.m_x) && (y + 1 == dest.m_y)) {
+                
+                d = GraphObject::up;
+                y = y + 1;
+                CPU->addToPath(x, y, d);
+                return;
+            }
+            
+            // since it's the first node that we check
+            // it's automatically min
+            minNode.updateMin(x, y + 1, GraphObject::up, NodeMaze[x][y + 1]->m_stepCount);
+        }
+        
+        // check down
+        if (!outOfBounds(x, y - 1) && NodeMaze[x][y - 1] != nullptr && NodeMaze[x][y - 1]->m_visited == true) {
+            
+            //  if that step is the exit point
+            if ((x == dest.m_x) && (y - 1 == dest.m_y)) {
+                
+                d = GraphObject::down;
+                y = y - 1;
+                CPU->addToPath(x, y, d);
+                return;
+            }
+            
+            // check if the node's stepcount is smaller than the current min
+            // OR if min hasn't been assigned yet (due to obstacles blocking path)
+            if (NodeMaze[x][y - 1]->m_stepCount < minNode.getMinCount() || minNode.getMinCount() == 0) {
+                
+                // keep track of node with smallest stepcount
+                minNode.updateMin(x, y - 1, GraphObject::down, NodeMaze[x][y - 1]->m_stepCount);
+            }
+        }
+        
+        // check right
+        if (!outOfBounds(x+1, y) && NodeMaze[x + 1][y] != nullptr && NodeMaze[x + 1][y]->m_visited == true)
+        {
+            // see if that step is the exit point
+            if ((x + 1 == dest.m_x) && (y == dest.m_y)) {
+                
+                d = GraphObject::right;
+                x = x + 1;
+                CPU->addToPath(x, y, d);
+                return;
+            }
+            
+            // check if the node's stepcount is smaller than the current min
+            // OR if min hasn't been assigned yet (due to obstacles blocking path)
+            if (NodeMaze[x + 1][y]->m_stepCount < minNode.getMinCount() || minNode.getMinCount() == 0) {
+                
+                // keep track of node with smallest stepcount
+                minNode.updateMin(x + 1, y, GraphObject::right, NodeMaze[x + 1][y]->m_stepCount);
+            }
+        }
+        
+        // check left
+        if (!outOfBounds(x - 1, y) && NodeMaze[x - 1][y] != nullptr && NodeMaze[x - 1][y]->m_visited == true) {
+            
+            // see if that step is the exit point
+            if (x - 1 == dest.m_x && y == dest.m_y) {
+                d = GraphObject::left;
+                x = x - 1;
+                CPU->addToPath(x, y, d);
+                return;
+            }
+            
+            // check if the node's stepcount is smaller than the current min
+            // OR if min hasn't been assigned yet (due to obstacles blocking path)
+            if (NodeMaze[x - 1][y]->m_stepCount < minNode.getMinCount() || minNode.getMinCount() == 0) {
+                // keep track of node with smallest stepcount
+                minNode.updateMin(x - 1, y, GraphObject::left, NodeMaze[x - 1][y]->m_stepCount);
+            }
+        }
+        // whatever the node with the smallest stepcount was,
+        // add it to the path
+        x = minNode.m_x;
+        y = minNode.m_y;
+        CPU->addToPath(minNode.m_x, minNode.m_y, minNode.m_dir);
+    }
+}
