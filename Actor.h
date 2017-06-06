@@ -56,11 +56,8 @@ public:
     virtual bool canCollectItems() { return false; }
     virtual bool hasCellPhoneTracker() { return false; }
     virtual bool coordinateCheck(int x, int y);
-
-
-	//temp
-	//int BFS(int mat[][COL], Point src, Point dest);
-
+    
+    
 private:
     StudentWorld *m_world;
     bool m_alive;
@@ -77,6 +74,7 @@ public:
     {
         setVisible(true);
     }
+    
     virtual ~Character() {}
     int getTotalHP() const { return m_HP; }
     void subtractFromHP(int amount) { m_HP -= amount; }
@@ -147,6 +145,19 @@ public:
         setVisible(true);
     }
     
+    // overloaded c'tor for testing purposes only!!! (ignore)
+    Protester(StudentWorld* world, int x, int y, int imgID, int hp, int ticks)
+    : Character(world, imgID, x, y, hp, left)
+    {
+        m_leave = false;
+        m_shoutRecovery = 0;
+        m_rightAngleTurnRecovery = 0;
+        m_rest = ticks;
+        m_distanceInCurDir = rand() % 53 + 8;
+        
+        setVisible(true);
+    }
+    
     virtual ~Protester() {}
     virtual void doSomething();
     virtual void annoy(int amount);
@@ -168,6 +179,8 @@ public:
     
     int getDistancedTraveled() const { return m_distanceInCurDir; }
     
+    void addToPath(int x, int y, Direction d) { path.push(pathNode(x, y, d)); }
+    
 private:
     bool m_leave; // leaving state of Protester
     int m_shoutRecovery; // rest time after a shout
@@ -175,6 +188,18 @@ private:
     int m_distanceInCurDir;
     int m_rightAngleTurnRecovery;
     int m_rest;
+    
+    struct pathNode
+    {
+        pathNode(int x, int y, Direction d) : m_x(x), m_y(y), m_dir(d) {}
+        int m_x;
+        int m_y;
+        Direction m_dir;
+    };
+    
+    std::queue<pathNode> path;
+    
+    virtual void doSomething_aux() { return;}
 };
 
 /*
@@ -190,7 +215,7 @@ private:
  4. Each Regular Protester starts out with 5 hit-points.
  5. Each Regular Protester starts out NOT in a leave-the-oil-field state.
  6. Each Regular Protester have the following graphic parameters:
- a. It has an image depth of 0 ñ theyíre always in the foreground
+ a. It has an image depth of 0 Ò theyÌre always in the foreground
  b. It has a size of 1.0
  */
 
@@ -199,6 +224,10 @@ class RegularProtester : public Protester
 public:
     RegularProtester(StudentWorld* world, int ticks)
     : Protester(world, IMID_PROTESTER, 5, ticks) {}
+    
+    // overloaded c'tor for testing purposes only!!! (ignore)
+    RegularProtester(StudentWorld* world, int x, int y, int ticks)
+    : Protester(world, x, y, IMID_PROTESTER, 5, ticks) {}
     
     virtual void collectGold();
 private:
@@ -218,11 +247,11 @@ private:
  4. Each Hardcore Protester starts out with 20 hit-points.
  5. Each Hardcore Protester starts out NOT in a leave-the-oil-field state.
  6. Each Hardcore Protester have the following graphic parameters:
- a. It has an image depth of 0 ñ theyíre always in the foreground
+ a. It has an image depth of 0 Ò theyÌre always in the foreground
  b. It has a size of 1.0
  
  In addition to any other initialization that you decide to do in your Hardcore Protesters class,
- a Hardcore Protester object must set itself to be visible using the GraphObject classís setVisible() method, e.g.:
+ a Hardcore Protester object must set itself to be visible using the GraphObject classÌs setVisible() method, e.g.:
  
  setVisible(true);
  */
@@ -230,13 +259,15 @@ private:
 class HardcoreProtester : public Protester
 {
 public:
-    HardcoreProtester(StudentWorld* world, int ticks)
-    : Protester(world, IMID_HARD_CORE_PROTESTER, 20, ticks) {}
+    HardcoreProtester(StudentWorld* world, Actor* user, int ticks)
+    : Protester(world, IMID_HARD_CORE_PROTESTER, 20, ticks) { user_tracker = user; }
     
     virtual ~HardcoreProtester() {}
     virtual bool hasCellPhoneTracker() { return true; }
     virtual void collectGold();
 private:
+    Actor* user_tracker;
+    virtual void doSomething_aux();
     
 };
 
@@ -265,17 +296,18 @@ public:
     
     
     Boulder(StudentWorld* world, int x_pos, int y_pos)
-    : Actor(world, IMID_BOULDER, x_pos, y_pos, down, 1.0, 1), m_state(STABLE), m_wait(30)
+    : Actor(world, IMID_BOULDER, x_pos, y_pos, down, 1.0, 1), m_state(STABLE), m_stationary(true), m_wait(30)
     {
         setVisible(true);
     }
     virtual ~Boulder() {}
     virtual void doSomething();
-    virtual bool canBlockCharacters() { return true; }
+    virtual bool canBlockCharacters() { return m_stationary; }
     
     
 private:
     BoulderState m_state;
+    bool  m_stationary;
     int m_wait;
 };
 
@@ -384,7 +416,7 @@ public:
     BarrelOfOil(StudentWorld* world, int x_pos, int y_pos)
     : Item(world, IMID_BARREL, BARRELOFOIL, x_pos, y_pos, right, 1.0, 2)
     {
-		setVisible(false);
+        setVisible(false);
     }
     virtual ~BarrelOfOil() {}
 private:
@@ -404,6 +436,3 @@ private:
 };
 
 #endif // ACTOR_H_
-
-
-
