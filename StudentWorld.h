@@ -16,11 +16,22 @@ class DiggerMan;
 class Dirt;
 
 struct node {
-	int m_x;
-	int m_y;
-	bool m_visited;
-	int m_stepCount;
-	node(int x, int y) : m_x(x), m_y(y), m_visited(false), m_stepCount(0) { }
+    int m_x;
+    int m_y;
+    GraphObject::Direction m_dir;
+    bool m_visited;
+    int m_stepCount;
+    void updateMin(int x, int y, GraphObject::Direction d, int stepcount)
+    {
+        m_x = x;
+        m_y = y;
+        m_stepCount = stepcount;
+        m_dir = d;
+    }
+    int getMinCount() { return m_stepCount; }
+    node(int x, int y) : m_x(x), m_y(y), m_dir(GraphObject::none), m_visited(false), m_stepCount(0) { }
+    node(int x, int y, int count) : m_x(x), m_y(y), m_dir(GraphObject::none), m_visited(false), m_stepCount(count) {}
+    node() : m_x(0), m_y(0), m_dir(GraphObject::none), m_visited(false), m_stepCount(0) {}
 };
 class StudentWorld : public GameWorld
 {
@@ -66,7 +77,7 @@ public:
     
     void scanForItems();
     void checkItemPickup(Item* actor);
-    void checkdroppedNugget(Item* actor, Protester* protester); 
+    void checkdroppedNugget(Item* actor, Protester* protester);
     
     
     bool proximityCheck(Actor* actor, int distance);
@@ -80,7 +91,7 @@ public:
     void dropGoldNugget();
     
     void shout(int amount);
-
+    
     bool atAnIntersection(Actor* CPU);
     int ProtesterRestTicks();
     int ProtesterStunTicks();
@@ -89,9 +100,14 @@ public:
     void setDisplayText();
     int getBarrelCount() const { return m_BarrelCount; }
     void decBarrelCount() { m_BarrelCount--; }
-	void buildNodeMaze();
-	void BFS(node* src, Actor* dest);
-	void updateNodeMaze(Actor* actor);
+    void incrProtesterCount() { m_protesterCount++; }
+    void decProtesterCount() { m_protesterCount--; }
+    int BFS(node src, Actor* dest);
+    void followShortestPath(Protester* CPU, node dest);
+    void buildNodeMaze();
+    void updateNodeMaze(Actor* actor);
+    void destroyNodeMaze();
+    void resetNodeMaze();
 private:
     std::vector<Actor*> m_actors;
     Dirt* m_land[VIEW_WIDTH][VIEW_HEIGHT];
@@ -99,8 +115,8 @@ private:
     
     //Arthur's Code
     int m_BarrelCount;
-	node* NodeMaze[VIEW_WIDTH - SPRITE_WIDTH][VIEW_HEIGHT - SPRITE_HEIGHT];
-
+    node* NodeMaze[VIEW_WIDTH][VIEW_HEIGHT];
+    
     
     // David's code
     int m_protesterSpawnRest;
