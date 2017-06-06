@@ -13,13 +13,13 @@
  
  (for ex.)
  What blocks Boulders, Squirts, or Protesters?:
-	- out-of-bounds, dirt, boulders
+ - out-of-bounds, dirt, boulders
  What blocks DiggerMan?:
-	- out-of-bounds, boulders
+ - out-of-bounds, boulders
  
  The coordinateCheck function will handle these differences
  */
-bool Actor::makeMove() // NEW!!! (edited)
+bool Actor::makeMove()
 {
     // get actor's current coordinate (x, y)
     int x = getX();
@@ -41,20 +41,11 @@ bool Actor::makeMove() // NEW!!! (edited)
 }
 
 
-void DiggerMan::doSomething() // UNDER CONSTRUCTION
+void DiggerMan::doSomething()
 {
     // check alive status
     if (isAlive() == false)
         return;
-    
-    
-    // see if 4x4 sprite overlaps any dirt
-    bool dirtWasRemoved = accessToWorld()->removeDirt(this);
-    
-    
-    if (dirtWasRemoved)
-        accessToWorld()->playSound(SOUND_DIG);
-    
     
     // get user input
     int userInput;
@@ -120,7 +111,20 @@ void DiggerMan::doSomething() // UNDER CONSTRUCTION
                     m_goldnuggets--;
                 }
                 break;
+                // custom spawn where the DiggerMan is (for testing purposes only)!!!
+            case 'c':
+            case'C':
+                int T = accessToWorld()->ProtesterRestTicks();
+                accessToWorld()->insertActor(new RegularProtester(accessToWorld(), getX(), getY(), T));
+                accessToWorld()->incrProtesterCount();
+                break;
         }
+        // see if 4x4 sprite overlaps any dirt
+        bool dirtWasRemoved = accessToWorld()->removeDirt(this);
+        
+        
+        if (dirtWasRemoved)
+            accessToWorld()->playSound(SOUND_DIG);
     }
 }
 
@@ -143,10 +147,10 @@ void DiggerMan::annoy(int amount)
  how often they're allowed to take an action (e.g., once every N ticks).
  This number of ticks (also known as 'resting ticks') may be computed as follows:
  
-    int ticksToWaitBetweenMoves = max(0, 3 - current_level_number/4)
+ int ticksToWaitBetweenMoves = max(0, 3 - current_level_number/4)
  
  So if the value of ticksToWaitBetweenMoves was 3,
- then the Regular Protester must 'rest' for 3 ticks and 
+ then the Regular Protester must 'rest' for 3 ticks and
  may perform its normal behavior every 4th tick
  */
 
@@ -169,7 +173,25 @@ void Protester::doSomething() // UNDER CONSTRUCTION
     
     // (3) complicated queue-based maze searching portion (descript. found on pg. 40)
     if (isLeaving()) {
-        // add code here
+        // check if protester has a path to the exit
+        if (!path.empty()) {
+            // if so, move one coordinate at a time towards the exit
+            pathNode p = path.front();
+            setDirection(p.m_dir);
+            moveTo(p.m_x, p.m_y);
+            path.pop();
+            // the last remaining element in the queue should be the exit coordinate
+            if (getX() == 60 && getY() == 60) {
+                setDead();
+                accessToWorld()->decProtesterCount();
+            }
+        }
+        else {
+            accessToWorld()->BFS(node(60, 60), this);
+            accessToWorld()->followShortestPath(this, node(60, 60));
+            // reset the maze for future use (i.e. when another Protester is set to leaving state)
+            accessToWorld()->resetNodeMaze();
+        }
         return;
     }
     
@@ -185,12 +207,22 @@ void Protester::doSomething() // UNDER CONSTRUCTION
     
     
     // (4.5) [specific Hardcore Protester action] (descript found on pg. 45)
-    /*
-     if (hasCellPhoneTracker() && !accessToWorld()->proximityCheck(this, 4))
-     {
-     // uncomment and add code here
-     }
-     */
+    if (hasCellPhoneTracker() && !accessToWorld()->proximityCheck(this, 4))
+    {
+        if (!path.empty()) {
+            pathNode p = path.front();
+            setDirection(p.m_dir);
+            moveTo(p.m_x, p.m_y);
+            path.pop();
+            setRestTicks(accessToWorld()->ProtesterRestTicks());
+            return;
+        }
+        else {
+            doSomething_aux();
+            if (!path.empty())
+                return;
+        }
+    }
     
     
     // (5) if user not within 4 units of user
@@ -221,8 +253,27 @@ void Protester::doSomething() // UNDER CONSTRUCTION
     
     // (8) & (9) Attempt to take step in current direction
     // If it is somehow blocked, set distance to 0, then rinse & repeat this whole process
-    if(!makeMove())
+    if (!makeMove())
         m_distanceInCurDir = 0;
+}
+
+void HardcoreProtester::doSomething_aux()
+{
+    // a. Compute a value M, such that M = 16 + current_level_number * 2
+    int M = 16 + accessToWorld()->getLevel() * 2;
+    /*
+     b.If the Hardcore Protester is less than or equal to
+     a total of M legal horizontal or vertical moves away from the current location of the DiggerMan
+     (as can be determined using the same basic queue - based maze - searching algorithm)
+     */
+    int stepsToUser = accessToWorld()->BFS(node(user_tracker->getX(), user_tracker->getY()), this);
+    
+    if (stepsToUser <= M) {
+        accessToWorld()->playSound(SOUND_FALLING_ROCK);
+        accessToWorld()->followShortestPath(this, node(user_tracker->getX(), user_tracker->getY()));
+        
+    }
+    accessToWorld()->resetNodeMaze();
 }
 
 /*
@@ -234,7 +285,7 @@ void Protester::doSomething() // UNDER CONSTRUCTION
  
  The following is the same for Regular & Hardcore Protesters:
  If, after its hit-points have been decremented,
- the Protester hasnít been completely annoyed
+ the Protester hasnÌt been completely annoyed
  
  It will then be 'stunned' and placed in a resting state for N resting ticks, where:
  
@@ -276,7 +327,7 @@ void Protester::annoy(int amount) // UNDER CONSTRUCTION // NEW!!! (edited)
  When a Gold Nugget is collected by a Regular Protester
  The Regular Protester must do the following in response:
  1. The Regular Protester plays an 'I'm rich' sound effect:
-    SOUND_PROTESTER_FOUND_GOLD.
+ SOUND_PROTESTER_FOUND_GOLD.
  2. The Regular Protester increases the player's score by 25 points for the bribery.
  3. The Regular Protester will immediately be bribed and transition into a leave-the-oil-field state.
  */
@@ -301,8 +352,9 @@ void Boulder::doSomething() // NEW!!!! (edited)
             if (m_wait > 0)
                 m_wait--;
             else if (m_wait <= 0) {
-		accessToWorld()->updateNodeMaze(this);
+                accessToWorld()->updateNodeMaze(this);
                 m_state = FALLING;
+                m_stationary = false;
                 accessToWorld()->playSound(SOUND_FALLING_ROCK);
             }
             break;
@@ -464,12 +516,12 @@ void Protester::makeRightAngleTurn()
  
  Hardcore Protester must do the following:
  1. The Hardcore Protester plays an "I'm rich!" sound effect:
-        SOUND_PROTESTER_FOUND_GOLD.
+ SOUND_PROTESTER_FOUND_GOLD.
  2. The Hardcore Protester increases the player's score by 50 points for the bribery.
  3. The Hardcore Protester will become fixated on the Nugget and
-    will pause to stare at it (just as if he/she were in a resting state doing nothing else)
-    for the following number of game ticks:
-        ticks_to_stare = max(50, 100 ñ current_level_number * 10)
+ will pause to stare at it (just as if he/she were in a resting state doing nothing else)
+ for the following number of game ticks:
+ ticks_to_stare = max(50, 100 Ò current_level_number * 10)
  */
 void HardcoreProtester::collectGold()
 {
@@ -496,4 +548,3 @@ bool DiggerMan::coordinateCheck(int x, int y)
     else
         return false;
 }
-
