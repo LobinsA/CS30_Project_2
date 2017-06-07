@@ -1,5 +1,9 @@
 // You can add/edit whatever you want on here
 
+Diagram of the hierachy of the Actor classes
+
+http://i.imgur.com/SrtoPUH.png
+
 1. Give an overview of the design of your program. How did you set up your inheritance relationships? Provide a diagram of your hierarchy that gives an overview of your design. Providing a UML diagram is optional but encouraged.
 
 For the Actor objects, we implemented a "bool system" within the Actor class and all of its sub-classes. The Actor class are going to have virtual functions that returns a default false value. The function name would be something like "canCollectItems()." 
