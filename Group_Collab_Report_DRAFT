@@ -1,0 +1,156 @@
+1. Give an overview of the design of your program. How did you set up your inheritance relationships? Provide a diagram of your hierarchy that gives an overview of your design. Providing a UML diagram is optional but encouraged.
+
+For the Actor objects, we implemented a "bool system" within the Actor class and all of its sub-classes. The Actor class are going to have virtual functions that returns a default false value. The function name would be something like "canCollectItems()." 
+public Actor: public GraphObject {
+  public:
+…
+  virtual bool canCollectItems() { return false; }
+};
+If a sub-class of Actor overrides this function and returns true, it means the sub-class that overrode it could be identified as a character. 
+class Character : public Actor {
+  public:
+…
+  virtual void canCollectItems() { return true; }
+}; 
+We use this "bool system" as a way to identify certain objects while we are iterating through the vector of Actors in the StudentWorld.
+(For ex.)
+// in StudentWorld.h 
+// I want to look for characters in the vector of Actors
+for (int i = 0; i < actors.size(); i++)
+if (actors[i]->canCollectItems() == true)
+cout << "Hey! I'm a character, do something with me!" << endl;
+
+This saves us from the over-usage of dynamic casting. Our "bool system" handles the identifications of boulders and hardcore protesters as well. 
+
+For our collectable items in the game, we divided them into two separate categories: 
+Item and VanishingItem
+The difference between them is that the VanishingItem are visible upon spawning, and only exists under a certain amount of ticks. Upon construction, these collectable items will also have their own identifiers under the enum “Misc” class. There will be a function that will return the enum Misc identifier it holds. This is useful when we want to know which type of item we’re dealing with when inside the StudentWorld.
+(For ex.)
+void StudentWorld::checkItemPickup(Item* obj)
+{
+  Actor::Misc item = obj->getItemType();
+            switch (item)
+{
+                case Actor::BARRELOFOIL:
+                    decBarrelCount();
+increaseScore(1000);
+                    break;
+}
+etc…
+This is the basic idea of the design and how the communication between the Actor and StudentWorld is done.
+
+2. Identify the platform and environment in which you developed and tested your program. Include the programing environment (and which version you used) and the hardware and operating system on which you developed and tested your program.
+
+The program was tested under the:
+• Xcode Version 8.0 (8A218a) (Mac)
+• Visual Studio 2015 (Windows 8.1)
+
+3. What modern C++ features were used in your code? Give any examples of smart pointers, lambda expressions, and move semantics used.
+
+Unfortunately, there were no modern C++ features used for our project.
+
+4. What coding standards did you adhere to? Provide details on how you chose variable name, comments, and a general approach to your groups agreed coding style
+
+The coding standards that we adhere to, was to write code and provide explanations for our code (when needed) in the comments prior to the function that a small child can understand. So in other words, not only make sure the code works logically, but also make sure that the code makes sense from a visual/reading standpoint. This was done so if there were any errors in the program, we would be able to track down our errors easily and see any flaws in our logic. As far as choosing our variable names, we would choose a name that makes sense to the task at hand. If it’s a function that’s dealing with a source following the shortest path to it’s destination, then we call it, “followShortestPath(Actor* src, Actor* dest).”
+
+5. How did you divide up the project in the group? What were the responsibilities of each group member? *
+We had 2 members in our group, and we divided the work according to which task we felt comfortable doing at the particular time. We didn't really have specific set of responsibilities, and we assisted each other when coming up with solutions to the project
+
+These checklists is more of a member having a large part in doing that particular task, rather than being sole responsibilities of that member
+
+David Torres:
+- Filling field with dirt
+- Mineshaft
+- Deletion of objects
+- Actor classes (except Boulder)
+- Collection of items by Diggerman
+- AI for Regular and Hardcore Protesters
+- Protesters shouting
+- Diggerman annoying Protesters
+
+
+Arthur Lobins: 
+- Handling the distribution of objects in the game
+- Transitions between each level
+- Implemented BFS algorithm to find the shortest path
+- Action of Protester finding shortest path from source to exit
+- Creating the Boulder class
+- The Boulder annoying characters while descending 
+-
+-
+-
+
+
+6. Select a part or parts of code in the program that required your group to collaborate: *
+
+A portion of the program that required group collaboration, were the queue-based maze search portion. How this maze search fits into our program, was that it helped identify the shortest path from a source to its destination, guaranteed by the breadth-first search algorithm. We developed the maze search separate from the Diggerman project, in order to grasp the concept of it and debug our errors quite easily. In order to translate this code into our Diggerman project, we needed a way to keep track of the open spaces that a Protester is able to travel to. This is ever-changing since the Diggerman can dig through dirt as long as he is alive. So we introduced "updateNodeMaze(Actor* obj)," which initially just took in the Diggerman object, and deleted the dirt that he "dug" through (aka, the 4x4 space he occupied). As Boulders were introduced into our program, we noticed that they too occupied an empty 4x4 space underneath them, which our updateNodeMaze function needed to reflect. In order to solve that issue, we broke the Boulder into 3 separate states:
+	Stable, Waiting, Falling
+When the dirt underneath the Boulder is dug through, the Boulder switches from a "stable" state to a "waiting" state, until it eventually descends downwards. When the Boulder is in the "waiting" state, we included a call to the updateNodeMaze function, passing along the Boulder object to reflect that the empty 4x4 space underneath the Boulder is now free and valid to travel to. With the combination of the BFS search algorithm and the updateNodeMaze function, we were able to find the shortest path from a source to its destination. Then later on, as we needed the number of steps from the source to the destination (for the Hardcore Protester’s cellphone tracker), we modified the maze search function to return an int.
+
+int StudentWorld::BFS(node src, Actor* dest) {
+    // Create a queue for BFS
+    std::queue<node> q;
+    
+    // Enqueue source cell
+    // Do a BFS starting from source cell
+    q.push(node(src.m_x, src.m_y));
+    
+    // mark the source cell as visited since we're right on top of it
+    NodeMaze[src.m_x][src.m_y]->m_visited = true;
+    
+    int rowNum[] = { -1, 0, 0, 1 };
+    int colNum[] = { 0, -1, 1, 0 };
+    
+    while (!q.empty())
+    {
+        node curr = q.front();
+        // Otherwise dequeue the front cell in the queue
+        // and enqueue its adjacent cells
+        q.pop();
+        
+        // check if destination is reached
+        if (curr.m_x == dest->getX() && curr.m_y == dest->getY()) {
+            NodeMaze[curr.m_x][curr.m_y]->m_visited = true;
+            return NodeMaze[curr.m_x][curr.m_y]->m_stepCount;
+            // the BFS is done!
+        }
+        
+        for (int i = 0; i < 4; i++)
+        {
+            int row = curr.m_x + rowNum[i];
+            int col = curr.m_y + colNum[i];
+            
+            //Check adjacent cells in each node of nodeMaze if valid.
+            if (!dest->coordinateCheck(row, col) && NodeMaze[row][col] != nullptr && NodeMaze[row][col]->m_visited != true)
+            {
+                // mark cell as visited
+                NodeMaze[row][col]->m_visited = true;
+                // increase the stepcount of the nodemaze by 1
+                NodeMaze[row][col]->m_stepCount = 1 + curr.m_stepCount;
+                // enqueue cell
+                q.push(node(row, col, NodeMaze[row][col]->m_stepCount));
+            }
+        }
+    }
+    return 0; // shouldn't reach here
+}
+ 
+7. Discuss one or more significant run-time errors or bugs your group encountered while writing the program by answer the following questions. *
+
+One of the major bugs that we encountered as a group, was the action of the Protester getting crushed by a Boulder. When a Protester gets fully annoyed, a call to the maze search (BFS) function is made. This BFS function finds the shortest path from the source (Protester) to the destination (x= 60, y=60). While finding the shortest path, it only accesses movable spots (not blocked by boulders, not going out-of-bounds and no dirt in the way). The process of finding this error was through playing our game, and noticing the BFS function going through an infinite loop since the source will never make its way to the destination. The reason being, when the BFS search is initiated, it checks only for movable spots, and repeats this process until it finds its destination (as mentioned earlier). And if a Boulder is crushing a Protester, that Boulder is still active in the game and it’ll show up in the checking of movable spots. That Boulder will block all 4 directions (up, down, left and right) that the BFS function checks. Since no matter which direction it checks, it’ll be within a radius of 3 of the Boulder. And thus, we’ll get an infinite loop since all 4 directions are now blocked and we’re now stuck into this infinite loop. The solution we came up with was to somehow have the Boulder (while descending downward) become irrelevant in the checking of movable spots, but still be able to crush characters along the way. So to do just that, we modified the added a member variable called “m_stationary,” which keeps track if the Boulder is stable or descending downwards. If it's descending downwards, m_stationary will hold false and the canBlockCharacters() virtual function is going to return false, and won't show up as a valid boulder when checking for boulders in the vector of Actors.
+
+class Boulder : public Actor
+{
+   public:
+Boulder(StudentWorld* world, …)
+    : Actor(world, …), m_stationary(true) {}
+   ...
+   virtual bool canBlockCharacters() { return m_stationary; }
+
+   private:
+   bool m_stationary;
+};
+
+8. What works in your program? What features are not implemented in your code? How did you test on your code? What known issues are still present?
+
+Everything seems to be working fine in our project. The portion we're not to certain on is the Hardcore Protester tracking down the Diggerman. When there is a lot of Hardcore Protesters on the screen, the game suffers a bit of lag due to multiple calls to the BFS function.
