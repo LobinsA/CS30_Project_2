@@ -8,7 +8,7 @@ public Actor: public GraphObject {
 …
   virtual bool canCollectItems() { return false; }
 };
-If a sub-class of Actor overrides this function and returns true, it means the sub-class that overrode it could be identified as a character. 
+If a sub-class of Actor overrides this function and returns true, it means the sub-class that overrode that function is identified as a character. 
 class Character : public Actor {
   public:
 …
