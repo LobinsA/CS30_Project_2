@@ -67,18 +67,17 @@ David:
 - Actor classes (except Boulder)
 - Collection of items by Diggerman
 - AI for Regular and Hardcore Protesters
-- Protesters shouting
-- Diggerman annoying Protesters
+- Protesters shouting/Diggerman annoying Protesters
+- Action of Protester(s) finding shortest path from source to exit
 
 
 Arthur: 
 - Handling the distribution of objects in the game
 - Transitions between each level
 - Implemented BFS algorithm to find the shortest path
-- Action of Protester finding shortest path from source to exit
-- Creating the Boulder class
-- The Boulder annoying characters while descending 
--
+- Coding the implementation of the Boulder class
+- The Boulder annoying characters while descending downwards
+- Scoreboard
 -
 -
 
