@@ -68,7 +68,7 @@ David:
 - Filling field with dirt
 - Mineshaft
 - Deletion of objects
-- Actor classes (except Boulder)
+- Actor classes (except Boulder and Squirt)
 - Collection of items by Diggerman
 - AI for Regular and Hardcore Protesters
 - Protesters shouting/Diggerman annoying Protesters
@@ -80,7 +80,8 @@ Arthur:
 - Transitions between each level
 - Implemented BFS algorithm to find the shortest path
 - Coding the implementation of the Boulder class
-- The Boulder annoying characters while descending downwards
+- Coding the implementation of the Squirt class
+- The Boulder and Squirt annoying characters while descending downwards
 - Scoreboard
 -
 -
