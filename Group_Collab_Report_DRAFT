@@ -76,7 +76,7 @@ David:
 
 
 Arthur: 
-- Handling the distribution of objects in the game
+- Handling the distribution/spawning of objects in the game
 - Transitions between each level
 - Implemented BFS algorithm to find the shortest path
 - Coding the implementation of the Boulder class
