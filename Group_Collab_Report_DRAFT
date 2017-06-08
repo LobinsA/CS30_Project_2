@@ -6,15 +6,15 @@ CS30
 Collaborative	Write-up
 
 1.	Give an overview of the design of your program. How did you set up your inheritance relationships? 
-Provide a diagram of your hierarchy that gives an overview of your design. 
+     Provide a diagram of your hierarchy that gives an overview of your design. 
 
-For the Actor objects, we implemented a "bool system" within the Actor class and all of its sub-classes. The Actor class is going to have virtual functions that returns a default false value. The function name would be something like "canCollectItems()." 
+For the Actor objects, we implemented a "bool system" within the Actor class and its sub-classes. The Actor class is going to have virtual functions that returns a default false value. The function name would be something like "canCollectItems()." 
 public Actor: public GraphObject {
   public:
 …
   virtual bool canCollectItems() { return false; }
 };
-If a sub-class of Actor were to override this function and return true,  that means the sub-class that overrode the function is now identified as a character. 
+If a sub-class of Actor were to override this function and return true, that means the sub-class that overrode the function is now identified as a character. 
 class Character : public Actor {
   public:
 …
@@ -48,23 +48,23 @@ increaseScore(1000);
 This is the basic idea of the design and how the communication between the Actor and StudentWorld is handled. 
 Here’s a diagram of the hierarchy of the Actor file:
 
-http://i.imgur.com/SrtoPUH.png
+	 http://i.imgur.com/S5GStCD.png
 
 2.	Identify the platform and environment in which you developed and tested your program. 
-Include the programing environment (and which version you used) 
-and the hardware and operating system on which you developed and tested your program.
+     Include the programing environment (and which version you used) 
+     and the hardware and operating system on which you developed and tested your program.
 
 The program was tested under the:
 • Xcode Version 8.0 (8A218a) (Mac)
 • Visual Studio 2015 (Windows 8.1)
 
-3.	What modern C++ features were used in your code? Give any examples of smart pointers,
-lambda expressions, and move semantics used.
+3.	What modern C++ features were used in your code? 
+     Give any examples of smart pointers, lambda expressions, and move semantics used.
 
 Unfortunately, there were no modern C++ features used for our project.
 
 4.	What coding standards did you adhere to? 
-Provide details on how you chose variable name, comments, and a general approach to your groups agreed coding style
+     Provide details on how you chose variable name, comments, and a general approach to your groups agreed coding style
 
 The coding standards that we adhere to, was to write code and provide explanations for our code in the comments that a small child can understand. So in other words, not only make sure the code works logically, but also make sure the code makes sense from a visual/reading standpoint. This was done so if there were any errors in the program, we would be able to track down our errors easily and see any flaws in our logic. As far as choosing our variable names, we would choose a name that makes sense to the task at hand. If it’s a function that’s dealing with a source following the shortest path to its destination, then we call it, “followShortestPath(Actor* src, Actor* dest).”
 
@@ -91,17 +91,17 @@ Arthur:
 - Implemented BFS algorithm to assist in finding the shortest path
 - Coded the implementation for the Boulder class
 - Coded the implementation for the Squirt class
-- The Boulder and Squirt annoying characters along its path
+- The Boulder and Squirt annoying characters while descending downwards
 - Scoreboard
 
 The rest of the tasks were handled between ourselves
 
 	6. Select a part or parts of code in the program that required your group to collaborate: *
 
-A portion of the program that required group collaboration, were the queue-based maze search portion. How this maze search fits into our program, was that it helped identify the shortest path from a source to its destination, guaranteed by the breadth-first search algorithm. We developed the maze search separate from the Diggerman project, in order to grasp the concept. In order to translate this separate code into our Diggerman project, we needed a way to keep track of the open spaces that a Protester is able to travel to. This is ever-changing since the Diggerman can dig through dirt as long as he is alive. So, we introduced "updateNodeMaze(Actor* obj)," which initially just took in the Diggerman object and deleted the dirt that he "dug" through (aka, the 4x4 space he occupied). As boulders were introduced into our program, we noticed that they too occupied an empty 4x4 space underneath them, which our updateNodeMaze function needed to reflect. In order to solve that issue, we broke the boulder into 3 separate states:
+A portion of the program that required group collaboration were the queue-based maze search portion. How this maze search fits into our program, was that it helped identify the shortest path from a source to its destination, guaranteed by the breadth-first search algorithm. We developed the maze search separate from the Diggerman project in order to grasp the concept. In order to translate this separate code into our Diggerman project, we needed a way to keep track of the open spaces that a Protester is able to travel to. This is ever-changing since the Diggerman can dig through dirt as long as he is alive. So we introduced "updateNodeMaze(Actor* obj)," which initially just took in the Diggerman object and deleted the dirt that he "dug" through (aka, the 4x4 space he occupied). As boulders were introduced into our program, we noticed that they too occupied an empty 4x4 space underneath them, which our updateNodeMaze function needed to reflect. In order to solve that issue, we broke the boulder into 3 separate states:
 	Stable, Waiting, Falling
 
-When the dirt underneath the boulder is dug through, the boulder switches from a "stable" state to a "waiting" state, until it eventually descends downwards. When the boulder is in the "waiting" state, we included a call to the updateNodeMaze function, passing along the boulder object to reflect that the empty 4x4 space underneath the boulder is now free and valid to travel to. With the combination of the BFS algorithm and the updateNodeMaze function, we were able to find the shortest path from a source to its destination. Then later on, as we needed the number of steps from the source to the destination (for the Hardcore Protester’s cellphone tracker), we modified the maze search function to return an int.
+When the dirt underneath the boulder is dug through, the boulder switches from a "stable" state to a "waiting" state, until it eventually descends downwards. When the boulder is in the "waiting" state, we included a call to the updateNodeMaze function, passing along the boulder object to reflect that the empty 4x4 space underneath the boulder is now free and valid to travel to. With the combination of the BFS function and the updateNodeMaze function, we were able to find the shortest path from a source to its destination. Then later on, as we needed the number of steps from the source to the destination (for the Hardcore Protester’s cellphone tracker), we modified the BFS function to return an int.
 
 
 int StudentWorld::BFS(node src, Actor* dest) {
@@ -154,7 +154,7 @@ int StudentWorld::BFS(node src, Actor* dest) {
 
 	7. Discuss one or more significant run-time errors or bugs your group encountered while writing the program
 
-One of the major bugs that we encountered as a group, was the action of a Protester getting crushed by a boulder. When a Protester gets fully annoyed, a call to the BFS function is made. This BFS function finds the shortest path from the source (Protester) to its destination. While finding the shortest path,  it only accesses movable spots (not blocked by boulders, not going out-of-bounds and no dirt in the way). The process of finding this error was through playing our game and noticing the BFS function going through an infinite loop since the source will never make its way to its destination. The reason being, when the BFS is initiated, it checks only for movable spots, and repeats this process until it finds its destination (as mentioned earlier). And if a boulder is crushing a Protester, that boulder is still active in the game and it’ll show up in the checking of movable spots. That boulder will block all 4 directions (up, down, left and right) that the BFS function checks. Since no matter which direction it checks, it’ll be within a radius of 3 of the boulder. And thus, we’ll get an infinite loop because all 4 directions are now blocked. The solution we came up with, was to somehow have the boulder (while descending downward) become irrelevant in the checking of movable spots, but still be able to crush characters as it descends. So to do just that, we added a member variable called “m_stationary,” which keeps track if the boulder is stable or descending downwards. If it is descending downwards, m_stationary will hold false and the virtual function “canBlockCharacters()” is going to return a false value. This will then cause this boulder object to not show up as a valid boulder when checking for boulders in the vector of Actors.
+One of the major bugs that we encountered as a group, was the action of a Protester getting crushed by a boulder. When a Protester gets fully annoyed, a call to the BFS function is made. This BFS function finds the shortest path from the source (Protester) to its destination. While finding the shortest path, it only accesses movable spots (not blocked by boulders, not going out-of-bounds and no dirt in the way). The process of finding this error was through playing our game and noticing the BFS function going through an infinite loop since the source will never make its way to its destination. The reason being, when the BFS is initiated, it checks only for movable spots and repeats this process until it finds its destination (as mentioned earlier). And if a boulder is crushing a Protester, that boulder is still active in the game and it’ll show up in the checking of movable spots. That boulder will block all 4 directions (up, down, left and right) that the BFS function checks. Since no matter which direction it checks, it’ll be within a radius of 3 of the boulder. And thus, we’ll get an infinite loop because all 4 directions are now blocked. The solution we came up with was to somehow have the boulder (while descending) become irrelevant in the checking of movable spots, but still be able to crush characters as it descends. So to do just that, we added a member variable called “m_stationary” in the boulder class, which keeps track if the boulder is stable or descending downwards. If it is descending downwards, m_stationary will hold false and the virtual function “canBlockCharacters()” is going to return a false value. This will then cause this object to not show up as a valid boulder when checking for boulders  in the vector of Actors.
 
 class Boulder : public Actor
 {
