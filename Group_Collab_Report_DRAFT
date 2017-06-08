@@ -91,7 +91,7 @@ Arthur:
 - Implemented BFS algorithm to assist in finding the shortest path
 - Coded the implementation for the Boulder class
 - Coded the implementation for the Squirt class
-- The Boulder and Squirt annoying characters while descending downwards
+- The Boulder and Squirt annoying characters along its path
 - Scoreboard
 
 The rest of the tasks were handled between ourselves
